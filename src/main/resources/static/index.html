@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Battle Arena</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1.5rem 2rem;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: #6366f1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #5856eb;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .hero {
+            text-align: center;
+            max-width: 800px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #9ca3af;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .features {
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: #6366f1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-desc {
+            color: #9ca3af;
+            line-height: 1.6;
+        }
+
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .auth-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: #111111;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .auth-modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #e5e5e5;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .modal-switch {
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .modal-switch a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+
+        .modal-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .close-modal:hover {
+            color: #ffffff;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <nav class="nav">
+                <div class="logo">
+                    <div class="logo-icon">⚔️</div>
+                    <span>Java Battle Arena</span>
+                </div>
+                <div class="auth-buttons">
+                    <button class="btn btn-outline" onclick="openModal('login')">로그인</button>
+                    <button class="btn btn-primary" onclick="openModal('register')">회원가입</button>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main">
+            <div class="grid-bg"></div>
+            <div class="hero">
+                <h1>코딩 실력을 겨뤄보세요</h1>
+                <p class="hero-subtitle">
+                    실시간 Java 코딩 배틀에서 전 세계 개발자들과 경쟁하며<br>
+                    프로그래밍 실력을 향상시키세요
+                </p>
+                <div class="hero-actions">
+                    <button class="btn btn-success btn-large" onclick="startBattle()">
+                        ⚡ 바로 시작하기
+                    </button>
+                    <button class="btn btn-outline btn-large" onclick="showDemo()">
+                        📺 데모 보기
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <section class="features">
+            <div class="features-container">
+                <h2 class="features-title">JAVA가 두려우신가요?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">실시간 배틀</h3>
+                        <p class="feature-desc">같은 문제를 동시에 풀며 실시간으로 순위를 확인하세요</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3 class="feature-title">맞춤형 문제</h3>
+                        <p class="feature-desc">AI가 분석한 당신의 실력에 맞는 최적의 문제를 제공합니다</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">상세한 분석</h3>
+                        <p class="feature-desc">코딩 패턴과 실력 향상 과정을 시각적으로 확인하세요</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="auth-modal" id="authModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">로그인</h2>
+                <p id="modalSubtitle">계정에 로그인하세요</p>
+            </div>
+            
+            <form id="authForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">이메일</label>
+                    <input type="email" id="email" class="form-input" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">비밀번호</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                
+                <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                    <label class="form-label" for="confirmPassword">비밀번호 확인</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-full">
+                    <span id="submitText">로그인</span>
+                </button>
+            </form>
+            
+            <p class="modal-switch">
+                <span id="switchText">계정이 없으신가요?</span>
+                <a href="#" onclick="switchMode()" id="switchLink">회원가입</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let isLoginMode = true;
+
+        function openModal(mode) {
+            const modal = document.getElementById('authModal');
+            modal.classList.add('active');
+            
+            if (mode === 'register') {
+                switchToRegister();
+            } else {
+                switchToLogin();
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('authModal');
+            modal.classList.remove('active');
+        }
+
+        function switchMode() {
+            if (isLoginMode) {
+                switchToRegister();
+            } else {
+                switchToLogin();
+            }
+        }
+
+        function switchToLogin() {
+            isLoginMode = true;
+            document.getElementById('modalTitle').textContent = '로그인';
+            document.getElementById('modalSubtitle').textContent = '계정에 로그인하세요';
+            document.getElementById('submitText').textContent = '로그인';
+            document.getElementById('switchText').textContent = '계정이 없으신가요?';
+            document.getElementById('switchLink').textContent = '회원가입';
+            document.getElementById('confirmPasswordGroup').style.display = 'none';
+        }
+
+        function switchToRegister() {
+            isLoginMode = false;
+            document.getElementById('modalTitle').textContent = '회원가입';
+            document.getElementById('modalSubtitle').textContent = '새 계정을 만드세요';
+            document.getElementById('submitText').textContent = '회원가입';
+            document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
+            document.getElementById('switchLink').textContent = '로그인';
+            document.getElementById('confirmPasswordGroup').style.display = 'block';
+        }
+
+        function startBattle() {
+            alert('로그인 후 이용할 수 있습니다!');
+            openModal('login');
+        }
+
+        function showDemo() {
+            alert('데모 영상을 준비 중입니다!');
+        }
+
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!isLoginMode && password !== confirmPassword) {
+                alert('비밀번호가 일치하지 않습니다!');
+                return;
+            }
+            
+            if (isLoginMode) {
+                console.log('로그인 시도:', { email, password });
+                alert('로그인 기능을 구현해주세요!');
+            } else {
+                console.log('회원가입 시도:', { email, password });
+                alert('회원가입 기능을 구현해주세요!');
+            }
+        });
+
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('authModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

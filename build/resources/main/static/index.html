@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚔️ 자바 배틀 아레나</title>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: 'Courier New', monospace; 
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+        
+        .arena {
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .arena::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,255,0,0.03) 2px,
+                rgba(0,255,0,0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 3em;
+            color: #ff6b35;
+            text-shadow: 0 0 20px #ff6b35, 0 0 40px #ff6b35;
+            animation: pulse 2s infinite;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .subtitle {
+            color: #00ffff;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .player-status {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            background: rgba(0,255,0,0.1);
+            margin: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .game-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .battle-arena {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .player-zone, .challenge-zone {
+            border: 2px solid #ff6b35;
+            border-radius: 15px;
+            padding: 20px;
+            background: rgba(255,107,53,0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+        
+        .zone-title {
+            font-size: 1.5em;
+            color: #ff6b35;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .login-form {
+            margin-bottom: 20px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,107,53,0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .challenge-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            background: rgba(0,255,255,0.05);
+        }
+        
+        .challenge-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .challenge-item:hover {
+            background: rgba(0,255,255,0.1);
+        }
+        
+        .code-editor {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .result-display {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.5);
+            border-left: 4px solid #00ff00;
+        }
+        
+        .success { border-left-color: #00ff00; color: #00ff00; }
+        .error { border-left-color: #ff0000; color: #ff6b6b; }
+        .info { border-left-color: #00ffff; color: #00ffff; }
+        
+        .floating-numbers {
+            position: fixed;
+            font-size: 2em;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 2s ease-out forwards;
+            z-index: 1000;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+        
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6b35);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="arena">
+        <div class="header">
+            <div class="title">⚔️ JAVA BATTLE ARENA ⚔️</div>
+            <div class="subtitle">코드로 싸우고, 경험치로 성장하라!</div>
+            <div id="player-info" class="player-status" style="display: none;">
+                <span id="player-name">Guest</span> | 
+                LV.<span id="player-level">1</span> | 
+                EXP: <span id="player-exp">0</span> | 
+                <span id="player-rank">NOVICE</span>
+            </div>
+        </div>
+        
+        <div class="game-section">
+            <div class="battle-arena">
+                <div class="player-zone">
+                    <div class="zone-title">🎮 플레이어 존</div>
+                    
+                    <div id="login-section" class="login-form">
+                        <input type="text" id="nickname" class="input-field" placeholder="전사의 이름을 입력하세요..." maxlength="20">
+                        <div>
+                            <button class="btn" onclick="joinArena()">⚔️ 아레나 입장</button>
+                            <button class="btn" onclick="loginArena()">🔓 로그인</button>
+                        </div>
+                    </div>
+                    
+                    <div id="round-selection" style="display: none;">
+                        <h3>🏟️ 라운드 선택</h3>
+                        <div id="rounds-list"></div>
+                    </div>
+                </div>
+                
+                <div class="challenge-zone">
+                    <div class="zone-title">👹 몬스터 존</div>
+                    <div id="current-challenge" style="display: none;">
+                        <h3 id="challenge-title">도전 과제</h3>
+                        <div id="challenge-desc">과제를 선택하세요</div>
+                        
+                        <textarea id="code-input" class="code-editor" placeholder="// 여기에 코드를 작성하여 몬스터를 처치하세요!"></textarea>
+                        
+                        <button class="btn" onclick="battle()">⚡ 전투 시작!</button>
+                        
+                        <div id="battle-result" class="result-display" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="challenge-list" class="challenge-list" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlayer = null;
+        let currentChallenge = null;
+        let selectedRound = null;
+
+        async function joinArena() {
+            const nickname = document.getElementById('nickname').value.trim();
+            if (!nickname) {
+                showResult('이름을 입력해주세요!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentPlayer = data;
+                    showPlayerInfo();
+                    loadRounds();
+                    showFloatingText('🎉 아레나 입장!', '#00ff00');
+                } else {
+                    const error = await response.text();
+                    showResult(`입장 실패: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('네트워크 오류!', 'error');
+            }
+        }
+
+        async function loginArena() {
+            const nickname = document.getElementById('nickname').value.trim();
+            if (!nickname) {
+                showResult('이름을 입력해주세요!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentPlayer = data;
+                    showPlayerInfo();
+                    loadRounds();
+                    showFloatingText('🚪 재입장!', '#00ffff');
+                } else {
+                    showResult('존재하지 않는 전사입니다!', 'error');
+                }
+            } catch (error) {
+                showResult('네트워크 오류!', 'error');
+            }
+        }
+
+        async function loadRounds() {
+            try {
+                const response = await fetch('/api/rounds');
+                const rounds = await response.json();
+                
+                const roundsList = document.getElementById('rounds-list');
+                roundsList.innerHTML = rounds.map(round => 
+                    `<button class="btn" onclick="selectRound(${round.id}, '${round.title}')">${round.ord}. ${round.title} ${round.boss ? '👹' : '🐺'}</button>`
+                ).join('');
+                
+                document.getElementById('round-selection').style.display = 'block';
+            } catch (error) {
+                showResult('라운드 로딩 실패!', 'error');
+            }
+        }
+
+        async function selectRound(roundId, title) {
+            selectedRound = roundId;
+            showResult(`${title} 선택됨!`, 'info');
+            
+            try {
+                const response = await fetch(`/api/challenges?round=${roundId}`);
+                const challenges = await response.json();
+                
+                const challengeList = document.getElementById('challenge-list');
+                challengeList.innerHTML = challenges.map(challenge => 
+                    `<div class="challenge-item" onclick="selectChallenge(${challenge.id}, '${challenge.title}')">
+                        ${challenge.ord}. ${challenge.title} (${challenge.type})
+                    </div>`
+                ).join('');
+                
+                challengeList.style.display = 'block';
+                document.getElementById('current-challenge').style.display = 'block';
+            } catch (error) {
+                showResult('도전 과제 로딩 실패!', 'error');
+            }
+        }
+
+        function selectChallenge(challengeId, title) {
+            currentChallenge = challengeId;
+            document.getElementById('challenge-title').textContent = `👹 ${title}`;
+            document.getElementById('challenge-desc').textContent = '몬스터가 나타났다! 코드로 처치하라!';
+            
+            if (title.includes('Hello World')) {
+                document.getElementById('code-input').placeholder = '// System.out.println("Hello World"); 같은 코드로 몬스터를 처치하세요!';
+            }
+        }
+
+        async function battle() {
+            if (!currentPlayer || !currentChallenge) {
+                showResult('플레이어와 도전 과제를 선택하세요!', 'error');
+                return;
+            }
+            
+            const code = document.getElementById('code-input').value;
+            if (!code.trim()) {
+                showResult('코드를 입력하세요!', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/submissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: currentPlayer.id,
+                        challengeId: currentChallenge,
+                        code: code
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'PASS') {
+                    showResult(`🎉 승리! 점수: ${result.score}`, 'success');
+                    showFloatingText(`+${Math.floor(result.score)}P!`, '#00ff00');
+                    // 플레이어 정보 업데이트
+                    setTimeout(() => {
+                        currentPlayer.exp += Math.floor(result.score * 0.2);
+                        showPlayerInfo();
+                    }, 500);
+                } else {
+                    showResult(`💀 패배... 점수: ${result.score}`, 'error');
+                    showFloatingText('MISS!', '#ff0000');
+                }
+                
+            } catch (error) {
+                showResult('전투 중 오류 발생!', 'error');
+            }
+        }
+
+        function showPlayerInfo() {
+            const playerInfo = document.getElementById('player-info');
+            document.getElementById('player-name').textContent = currentPlayer.nickname;
+            document.getElementById('player-level').textContent = Math.floor(currentPlayer.exp / 100) + 1;
+            document.getElementById('player-exp').textContent = currentPlayer.exp;
+            document.getElementById('player-rank').textContent = currentPlayer.rankTag;
+            
+            playerInfo.style.display = 'block';
+            document.getElementById('login-section').style.display = 'none';
+        }
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('battle-result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result-display ${type}`;
+            resultDiv.style.display = 'block';
+        }
+
+        function showFloatingText(text, color) {
+            const floating = document.createElement('div');
+            floating.className = 'floating-numbers';
+            floating.textContent = text;
+            floating.style.color = color;
+            floating.style.left = Math.random() * window.innerWidth + 'px';
+            floating.style.top = window.innerHeight * 0.5 + 'px';
+            
+            document.body.appendChild(floating);
+            
+            setTimeout(() => floating.remove(), 2000);
+        }
+    </script>
+</body>
+</html>
