@@ -1,0 +1,63 @@
+spring:
+  profiles:
+    active: local
+    
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:XE
+    username: arena_user
+    password: arena_pass
+    driver-class-name: oracle.jdbc.OracleDriver
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.OracleDialect
+        format_sql: true
+        
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:your_google_client_id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your_google_client_secret}
+
+app:
+  jwtSecret: mySecretKey
+  jwtExpirationMs: 86400000
+
+logging:
+  level:
+    com.arena: DEBUG
+    org.springframework.security: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+      
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+app:
+  jwtSecret: ${JWT_SECRET}
+  jwtExpirationMs: 86400000
+
+logging:
+  level:
+    com.arena: INFO

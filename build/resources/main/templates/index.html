@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Battle Arena</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
         * {
             margin: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
             background: #0a0a0a;
             color: #ffffff;
             overflow-x: hidden;
@@ -73,6 +74,7 @@
             text-decoration: none;
             border: none;
             font-size: 0.9rem;
+            font-family: inherit;
         }
 
         .btn-outline {
@@ -159,65 +161,6 @@
             background-size: 50px 50px;
         }
 
-        .features {
-            padding: 4rem 2rem;
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .features-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .features-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 3rem;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 2rem;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: #6366f1;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-        }
-
-        .feature-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-        }
-
-        .feature-desc {
-            color: #9ca3af;
-            line-height: 1.6;
-        }
-
         .auth-modal {
             position: fixed;
             top: 0;
@@ -284,6 +227,7 @@
             border-radius: 8px;
             color: #ffffff;
             font-size: 1rem;
+            font-family: inherit;
         }
 
         .form-input:focus {
@@ -327,6 +271,27 @@
             color: #ffffff;
         }
 
+        .user-info {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info.active {
+            display: flex;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .hero h1 {
                 font-size: 2.5rem;
@@ -335,10 +300,6 @@
             .hero-actions {
                 flex-direction: column;
                 align-items: center;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -351,9 +312,14 @@
                     <div class="logo-icon">⚔️</div>
                     <span>Java Battle Arena</span>
                 </div>
-                <div class="auth-buttons">
+                <div class="auth-buttons" id="authButtons">
                     <button class="btn btn-outline" onclick="openModal('login')">로그인</button>
                     <button class="btn btn-primary" onclick="openModal('register')">회원가입</button>
+                </div>
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">J</div>
+                    <span id="userNickname">사용자</span>
+                    <button class="btn btn-outline" onclick="logout()">로그아웃</button>
                 </div>
             </nav>
         </header>
@@ -370,35 +336,12 @@
                     <button class="btn btn-success btn-large" onclick="startBattle()">
                         ⚡ 바로 시작하기
                     </button>
-                    <button class="btn btn-outline btn-large" onclick="showDemo()">
-                        📺 데모 보기
+                    <button class="btn btn-outline btn-large" onclick="showLeaderboard()">
+                        🏆 순위표 보기
                     </button>
                 </div>
             </div>
         </main>
-
-        <section class="features">
-            <div class="features-container">
-                <h2 class="features-title">JAVA가 두려우신가요?</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">⚡</div>
-                        <h3 class="feature-title">실시간 배틀</h3>
-                        <p class="feature-desc">같은 문제를 동시에 풀며 실시간으로 순위를 확인하세요</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">🎯</div>
-                        <h3 class="feature-title">맞춤형 문제</h3>
-                        <p class="feature-desc">AI가 분석한 당신의 실력에 맞는 최적의 문제를 제공합니다</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3 class="feature-title">상세한 분석</h3>
-                        <p class="feature-desc">코딩 패턴과 실력 향상 과정을 시각적으로 확인하세요</p>
-                    </div>
-                </div>
-            </div>
-        </section>
     </div>
 
     <div class="auth-modal" id="authModal">
@@ -420,6 +363,11 @@
                     <input type="password" id="password" class="form-input" placeholder="••••••••" required>
                 </div>
                 
+                <div class="form-group" id="nicknameGroup" style="display: none;">
+                    <label class="form-label" for="nickname">닉네임</label>
+                    <input type="text" id="nickname" class="form-input" placeholder="닉네임을 입력하세요">
+                </div>
+                
                 <div class="form-group" id="confirmPasswordGroup" style="display: none;">
                     <label class="form-label" for="confirmPassword">비밀번호 확인</label>
                     <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••">
@@ -439,6 +387,13 @@
 
     <script>
         let isLoginMode = true;
+        let authToken = localStorage.getItem('auth_token');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (authToken) {
+                checkAuthStatus();
+            }
+        });
 
         function openModal(mode) {
             const modal = document.getElementById('authModal');
@@ -454,6 +409,7 @@
         function closeModal() {
             const modal = document.getElementById('authModal');
             modal.classList.remove('active');
+            clearForm();
         }
 
         function switchMode() {
@@ -471,6 +427,7 @@
             document.getElementById('submitText').textContent = '로그인';
             document.getElementById('switchText').textContent = '계정이 없으신가요?';
             document.getElementById('switchLink').textContent = '회원가입';
+            document.getElementById('nicknameGroup').style.display = 'none';
             document.getElementById('confirmPasswordGroup').style.display = 'none';
         }
 
@@ -481,36 +438,121 @@
             document.getElementById('submitText').textContent = '회원가입';
             document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
             document.getElementById('switchLink').textContent = '로그인';
+            document.getElementById('nicknameGroup').style.display = 'block';
             document.getElementById('confirmPasswordGroup').style.display = 'block';
         }
 
+        function clearForm() {
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('nickname').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    showUserInfo(user);
+                } else {
+                    localStorage.removeItem('auth_token');
+                    authToken = null;
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                localStorage.removeItem('auth_token');
+                authToken = null;
+            }
+        }
+
+        function showUserInfo(user) {
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('userInfo').classList.add('active');
+            document.getElementById('userNickname').textContent = user.nickname;
+            document.getElementById('userAvatar').textContent = user.nickname.charAt(0).toUpperCase();
+        }
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            authToken = null;
+            document.getElementById('authButtons').style.display = 'flex';
+            document.getElementById('userInfo').classList.remove('active');
+        }
+
         function startBattle() {
-            alert('로그인 후 이용할 수 있습니다!');
-            openModal('login');
+            if (!authToken) {
+                alert('로그인 후 이용할 수 있습니다!');
+                openModal('login');
+                return;
+            }
+            window.location.href = '/arena';
         }
 
-        function showDemo() {
-            alert('데모 영상을 준비 중입니다!');
+        function showLeaderboard() {
+            alert('리더보드 기능을 준비 중입니다!');
         }
 
-        document.getElementById('authForm').addEventListener('submit', function(e) {
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const nickname = document.getElementById('nickname').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
-            if (!isLoginMode && password !== confirmPassword) {
-                alert('비밀번호가 일치하지 않습니다!');
-                return;
+            if (!isLoginMode) {
+                if (password !== confirmPassword) {
+                    alert('비밀번호가 일치하지 않습니다!');
+                    return;
+                }
+                if (!nickname.trim()) {
+                    alert('닉네임을 입력해주세요!');
+                    return;
+                }
             }
             
-            if (isLoginMode) {
-                console.log('로그인 시도:', { email, password });
-                alert('로그인 기능을 구현해주세요!');
-            } else {
-                console.log('회원가입 시도:', { email, password });
-                alert('회원가입 기능을 구현해주세요!');
+            const url = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+            const body = isLoginMode ? 
+                { email, password } : 
+                { email, password, nickname };
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (isLoginMode) {
+                        authToken = data.token;
+                        localStorage.setItem('auth_token', authToken);
+                        showUserInfo(data);
+                        closeModal();
+                        alert(`환영합니다, ${data.nickname}님!`);
+                    } else {
+                        alert(data.message);
+                        switchToLogin();
+                        clearForm();
+                    }
+                } else {
+                    alert(data.message || '오류가 발생했습니다.');
+                }
+                
+            } catch (error) {
+                console.error('Request failed:', error);
+                alert('서버와 통신 중 오류가 발생했습니다.');
             }
         });
 
