@@ -17,7 +17,7 @@ public class QuizSubmission {
     @Column(name = "QUIZ_TITLE")
     private String quizTitle;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     @Column(name = "QUESTION")
     private String question;
     

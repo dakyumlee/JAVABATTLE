@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PROBLEM_SUBMISSIONS")
+@Table(name = "submissions")
 public class ProblemSubmission {
     
     @Id
@@ -17,8 +17,8 @@ public class ProblemSubmission {
     @Column(name = "PROBLEM_TITLE")
     private String problemTitle;
     
-    @Lob
-    @Column(name = "ANSWER")
+    @Column(columnDefinition = "TEXT")
+    @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
     
     @Column(name = "SUBMITTED_AT", nullable = false, insertable = true, updatable = false)

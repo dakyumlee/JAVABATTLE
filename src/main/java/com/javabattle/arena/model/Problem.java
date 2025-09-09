@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "PROBLEMS")
+@Table(name = "problems")
 public class Problem {
 
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
-@Column(name = "PROBLEM_ID")
+@Column(name = "id")
 private Long problemId;
 
 @Column(name = "TITLE", nullable = false, length = 200)
