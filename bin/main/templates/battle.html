@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Battle Arena</title>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2d2d2d;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .battle-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .timer {
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mode-badge {
+            background: #f39c12;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .invite-code {
+            background: #e67e22;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .players {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .player {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3498db;
+        }
+
+        .main-container {
+            height: calc(100vh - 60px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .problem-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .problem-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #3498db;
+        }
+
+        .problem-description {
+            line-height: 1.6;
+            color: #e0e0e0;
+            white-space: pre-line;
+        }
+
+        .code-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .code-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #252525;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .code-title {
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .code-editor {
+            flex: 1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            border: none;
+            outline: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .opponent-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .opponent-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            background: #252525;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .opponent-name {
+            font-weight: 600;
+            color: #e74c3c;
+        }
+
+        .opponent-progress {
+            font-size: 12px;
+            color: #95a5a6;
+            margin-top: 4px;
+        }
+
+        .opponent-code {
+            flex: 1;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-y: auto;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .battle-status {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .status-message {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        .status-detail {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .waiting-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .waiting-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #333;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .waiting-text {
+            font-size: 18px;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .waiting-detail {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← 홈으로</a>
+
+    <div class="waiting-screen" id="waitingScreen">
+        <div class="waiting-spinner"></div>
+        <div class="waiting-text" id="waitingText">준비 중...</div>
+        <div class="waiting-detail" id="waitingDetail">잠시만 기다려주세요</div>
+    </div>
+
+    <div class="header">
+        <div class="logo">
+            <span id="modeIcon">⚔️</span>
+            <span id="modeTitle">Java Battle Arena</span>
+        </div>
+        <div class="battle-info">
+            <div class="mode-badge" id="modeBadge">배틀 모드</div>
+            <div class="invite-code" id="inviteCodeHeader" style="display: none;" onclick="copyInviteCode()">초대코드 복사</div>
+            <div class="timer" id="timer">05:00</div>
+            <div class="players" id="playersInfo" style="display: none;">
+                <div class="player">
+                    <div class="status-dot"></div>
+                    <span id="player1Name">나</span>
+                </div>
+                <span>VS</span>
+                <div class="player">
+                    <div class="status-dot" style="background: #e74c3c;"></div>
+                    <span id="player2Name">상대방</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="problem-section">
+                <div class="problem-title" id="problemTitle">문제를 불러오는 중...</div>
+                <div class="problem-description" id="problemDescription">잠시만 기다려주세요...</div>
+            </div>
+            
+            <div class="code-section">
+                <div class="code-header">
+                    <div class="code-title">내 코드</div>
+                    <div class="code-actions">
+                        <button class="btn btn-primary" onclick="runCode()">실행</button>
+                        <button class="btn btn-success" onclick="submitCode()">제출</button>
+                    </div>
+                </div>
+                <textarea class="code-editor" id="codeEditor" placeholder="여기에 코드를 작성하세요...">
+//
+	</textarea>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="battle-status">
+                <div class="status-message" id="statusMessage">준비 중...</div>
+                <div class="status-detail" id="statusDetail">모드를 설정하는 중입니다</div>
+            </div>
+
+            <div class="opponent-section">
+                <div class="opponent-header">
+                    <div class="opponent-name" id="opponentName">상대방</div>
+                    <div class="opponent-progress" id="opponentProgress">상태: 대기 중</div>
+                </div>
+                <div class="opponent-code" id="opponentCode">상대방의 코드가 여기에 실시간으로 표시됩니다...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let battleRoom = null;
+        let inviteCode = null;
+        let timeLeft = 300;
+        let timerInterval = null;
+        let isGameStarted = false;
+        let battleMode = null;
+
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function generateInviteCode() {
+            return Math.random().toString(36).substr(2, 6).toUpperCase();
+        }
+
+        function copyInviteCode() {
+            if (inviteCode) {
+                navigator.clipboard.writeText(inviteCode).then(() => {
+                    alert('초대코드가 복사되었습니다: ' + inviteCode);
+                }).catch(() => {
+                    prompt('초대코드를 복사하세요:', inviteCode);
+                });
+            }
+        }
+
+        function initializeBattle() {
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+
+            battleMode = getUrlParameter('mode') || 'random';
+            const roomName = getUrlParameter('room');
+            const joinCode = getUrlParameter('code');
+
+            console.log('배틀 모드:', battleMode);
+
+            switch(battleMode) {
+                case 'solo':
+                    initializeSoloMode();
+                    break;
+                case 'create':
+                    initializeCreateMode(roomName);
+                    break;
+                case 'random':
+                    initializeRandomMode();
+                    break;
+                case 'join':
+                    initializeJoinMode(joinCode);
+                    break;
+                default:
+                    initializeRandomMode();
+                    break;
+            }
+        }
+
+        function initializeSoloMode() {
+            document.getElementById('modeIcon').textContent = '🎯';
+            document.getElementById('modeTitle').textContent = '혼자 연습';
+            document.getElementById('modeBadge').textContent = 'Solo Mode';
+            document.getElementById('timer').textContent = '무제한';
+
+            loadSoloProblem();
+            
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('statusMessage').textContent = '혼자 연습 모드';
+            document.getElementById('statusDetail').textContent = '자유롭게 코드를 작성해보세요';
+            document.getElementById('opponentName').textContent = 'AI 도우미';
+            document.getElementById('opponentCode').textContent = '혼자 연습 모드입니다. 마음껏 코딩해보세요!';
+            document.getElementById('opponentProgress').textContent = '상태: 대기 중';
+        }
+
+        function initializeCreateMode(roomName) {
+            document.getElementById('modeIcon').textContent = '🏠';
+            document.getElementById('modeTitle').textContent = '방 만들기';
+            document.getElementById('modeBadge').textContent = roomName || '새 방';
+            
+            inviteCode = generateInviteCode();
+            document.getElementById('inviteCodeHeader').textContent = `초대코드: ${inviteCode}`;
+            document.getElementById('inviteCodeHeader').style.display = 'block';
+
+            document.getElementById('waitingText').textContent = '방이 생성되었습니다!';
+            document.getElementById('waitingDetail').innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 16px; margin-bottom: 10px;">초대코드:</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #e67e22; font-family: monospace; letter-spacing: 3px;">${inviteCode}</div>
+                </div>
+                <button onclick="copyInviteCode()" style="padding: 10px 20px; background: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">코드 복사</button>
+                <div style="margin-top: 15px; font-size: 14px; color: #95a5a6;">친구에게 초대코드를 보내주세요</div>
+            `;
+
+            connectWebSocket();
+        }
+
+        function initializeRandomMode() {
+            document.getElementById('modeIcon').textContent = '⚡';
+            document.getElementById('modeTitle').textContent = '랜덤 매칭';
+            document.getElementById('modeBadge').textContent = 'Random Match';
+
+            document.getElementById('waitingText').textContent = '상대방을 찾는 중...';
+            document.getElementById('waitingDetail').textContent = '잠시만 기다려주세요';
+
+            connectWebSocket();
+        }
+
+        function initializeJoinMode(joinCode) {
+            document.getElementById('modeIcon').textContent = '🔑';
+            document.getElementById('modeTitle').textContent = '방 참가';
+            document.getElementById('modeBadge').textContent = `코드: ${joinCode}`;
+
+            document.getElementById('waitingText').textContent = '방을 찾는 중...';
+            document.getElementById('waitingDetail').textContent = `초대코드: ${joinCode}`;
+
+            connectWebSocket();
+        }
+
+        function connectWebSocket() {
+            const token = localStorage.getItem('jwtToken');
+            console.log('WebSocket 연결 시도 중...');
+            
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect(
+                {'Authorization': `Bearer ${token}`}, 
+                onConnected, 
+                onError
+            );
+        }
+
+        function onConnected(frame) {
+            console.log('WebSocket 연결 성공:', frame);
+            
+            stompClient.subscribe('/topic/battle', onBattleMessage);
+            
+            const roomName = getUrlParameter('room');
+            const joinCode = getUrlParameter('code');
+
+            if (battleMode === 'create' && roomName) {
+                stompClient.send('/app/battle/create-room', {}, JSON.stringify({
+                    roomName: roomName,
+                    inviteCode: inviteCode
+                }));
+            } else if (battleMode === 'join' && joinCode) {
+                stompClient.send('/app/battle/join-by-code', {}, JSON.stringify({
+                    inviteCode: joinCode
+                }));
+            } else if (battleMode === 'random') {
+                stompClient.send('/app/battle/join-random', {}, JSON.stringify({}));
+            }
+        }
+
+        function onError(error) {
+            console.error('WebSocket 연결 실패:', error);
+            document.getElementById('waitingScreen').innerHTML = `
+                <div style="text-align: center;">
+                    <div style="color: #e74c3c; font-size: 18px; margin-bottom: 10px;">연결 실패</div>
+                    <div style="color: #95a5a6; font-size: 14px; margin-bottom: 20px;">서버에 연결할 수 없습니다</div>
+                    <button onclick="location.reload()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; margin-right: 10px;">다시 시도</button>
+                    <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">홈으로</button>
+                </div>
+            `;
+        }
+
+        function onBattleMessage(message) {
+            console.log('=== 브라우저가 메시지 받음 ===');
+            console.log('Raw message:', message);
+            console.log('Message body:', message.body);
+            
+            const data = JSON.parse(message.body);
+            console.log('배틀 메시지 받음:', data);
+            console.log('메시지 타입:', data.type);
+
+            switch(data.type) {
+                case 'WAITING':
+                    console.log('대기 중...');
+                    break;
+                case 'ROOM_CREATED':
+                    battleRoom = data.roomId;
+                    break;
+                case 'PLAYER_JOINED':
+                    updatePlayerList(data);
+                    break;
+                case 'GAME_START':
+                    startGame(data);
+                    break;
+                case 'OPPONENT_CODE_UPDATE':
+                    updateOpponentCode(data.code);
+                    break;
+                case 'GAME_END':
+                    endGame(data);
+                    break;
+                case 'OPPONENT_LEFT':
+                    alert('상대방이 나갔습니다.');
+                    window.location.href = '/';
+                    break;
+                case 'ROOM_NOT_FOUND':
+                    alert('해당 초대코드의 방을 찾을 수 없습니다.');
+                    window.location.href = '/';
+                    break;
+                case 'ROOM_FULL':
+                    alert('방이 가득 찼습니다.');
+                    window.location.href = '/';
+                    break;
+                case 'INCORRECT':
+                    alert(data.message || '틀렸습니다. 다시 시도하세요.');
+                    break;
+            }
+        }
+
+        function updatePlayerList(data) {
+            if (data.players && data.players.length >= 2) {
+                document.getElementById('waitingText').textContent = '게임 시작 준비 중...';
+                document.getElementById('waitingDetail').textContent = '곧 배틀이 시작됩니다!';
+            }
+        }
+
+        function startGame(data) {
+            console.log('게임 시작:', data);
+            isGameStarted = true;
+            battleRoom = data.roomId;
+            
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('playersInfo').style.display = 'flex';
+            
+            document.getElementById('problemTitle').textContent = data.problem.title;
+            document.getElementById('problemDescription').textContent = data.problem.description;
+            
+            document.getElementById('statusMessage').textContent = '배틀 진행 중!';
+            document.getElementById('statusDetail').textContent = '문제를 해결하세요';
+            
+            if (data.opponents && data.opponents.length > 0) {
+                document.getElementById('player2Name').textContent = data.opponents[0];
+                document.getElementById('opponentName').textContent = data.opponents[0];
+            }
+            
+            startTimer();
+        }
+
+        function loadSoloProblem() {
+            const problems = [
+                {
+                    title: "두 수의 합",
+                    description: `두 정수 A와 B를 입력받은 다음, A+B를 출력하는 프로그램을 작성하시오.
+
+입력:
+첫째 줄에 A와 B가 주어진다. (0 < A, B < 10)
+
+출력:
+첫째 줄에 A+B를 출력한다.
+
+예제 입력:
+1 2
+
+예제 출력:
+3`
+                }
+            ];
+            
+            const problem = problems[0];
+            document.getElementById('problemTitle').textContent = problem.title;
+            document.getElementById('problemDescription').textContent = problem.description;
+        }
+
+        function updateOpponentCode(code) {
+            document.getElementById('opponentCode').textContent = code || '상대방이 코드를 작성 중입니다...';
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame({ result: 'TIME_UP' });
+                }
+            }, 1000);
+        }
+
+        function runCode() {
+            const code = document.getElementById('codeEditor').value;
+            
+            if (battleMode === 'solo') {
+                alert('실행 결과: 3\n(혼자 연습 모드에서는 간단한 테스트만 제공됩니다)');
+                return;
+            }
+            
+            fetch('/api/battle/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                },
+                body: JSON.stringify({ code: code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('실행 결과: ' + (data.success ? data.output : data.error));
+            })
+            .catch(error => {
+                console.error('코드 실행 실패:', error);
+                alert('코드 실행에 실패했습니다.');
+            });
+        }
+
+        function submitCode() {
+            const code = document.getElementById('codeEditor').value;
+            
+            if (battleMode === 'solo') {
+                if (code.includes('System.out.println(a + b)')) {
+                    alert('정답입니다! 🎉');
+                    document.getElementById('statusMessage').textContent = '문제 해결 완료!';
+                    document.getElementById('statusDetail').textContent = '새로운 문제에 도전해보세요';
+                } else {
+                    alert('틀렸습니다. 다시 시도해보세요.');
+                }
+                return;
+            }
+            
+            if (!battleRoom || !stompClient || !stompClient.connected) {
+                alert('배틀이 시작되지 않았습니다.');
+                return;
+            }
+
+            stompClient.send('/app/battle/submit', {}, JSON.stringify({
+                roomId: battleRoom,
+                code: code
+            }));
+
+            document.getElementById('statusMessage').textContent = '코드 제출 완료!';
+            document.getElementById('statusDetail').textContent = '결과를 기다리는 중...';
+        }
+
+        function endGame(data) {
+            clearInterval(timerInterval);
+            isGameStarted = false;
+
+            let message = '';
+            let color = '#3498db';
+
+            switch(data.result) {
+                case 'WIN':
+                    message = '🎉 승리!';
+                    color = '#27ae60';
+                    break;
+                case 'LOSE':
+                    message = '😢 패배';
+                    color = '#e74c3c';
+                    break;
+                case 'TIME_UP':
+                    message = '⏰ 시간 종료';
+                    color = '#95a5a6';
+                    break;
+            }
+
+            document.getElementById('statusMessage').innerHTML = message;
+            document.getElementById('statusMessage').style.color = color;
+            document.getElementById('statusDetail').textContent = '5초 후 메인 페이지로 이동합니다';
+
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 5000);
+        }
+
+        document.getElementById('codeEditor').addEventListener('input', function() {
+            if (battleMode !== 'solo' && isGameStarted && battleRoom && stompClient && stompClient.connected) {
+                stompClient.send('/app/battle/code-update', {}, JSON.stringify({
+                    roomId: battleRoom,
+                    code: this.value
+                }));
+            }
+        });
+
+        window.onload = function() {
+            initializeBattle();
+        };
+
+        window.onbeforeunload = function() {
+            if (stompClient && battleRoom) {
+                stompClient.send('/app/battle/leave', {}, JSON.stringify({
+                    roomId: battleRoom
+                }));
+            }
+        };
+    </script>
+</body>
+</html>

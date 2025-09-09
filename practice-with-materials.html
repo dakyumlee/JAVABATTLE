@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코딩 연습 - Java Battle Arena</title>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+
+      body {
+          font-family: 'Pretendard', sans-serif;
+          background: #0a0a0a;
+          color: #ffffff;
+          min-height: 100vh;
+      }
+
+      .header {
+          background: #1a1a1a;
+          padding: 1rem 2rem;
+          border-bottom: 1px solid #333;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .logo {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: #3498db;
+      }
+
+      .back-btn {
+          background: #6c757d;
+          color: white;
+          padding: 0.5rem 1rem;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          text-decoration: none;
+          transition: background-color 0.2s ease;
+      }
+
+      .back-btn:hover {
+          background: #5a6268;
+      }
+
+      .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+      }
+
+      .shared-materials-section {
+          margin-bottom: 3rem;
+          background: #1a1a1a;
+          border-radius: 16px;
+          padding: 2rem;
+          border: 1px solid #333;
+      }
+
+      .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+      }
+
+      .section-title {
+          color: #3498db;
+          font-size: 1.5rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+      }
+
+      .material-notification {
+          background: #e74c3c;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          animation: pulse 2s infinite;
+          display: none;
+      }
+
+      @keyframes pulse {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.05); }
+          100% { opacity: 1; transform: scale(1); }
+      }
+
+      .materials-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 1rem;
+      }
+
+      .material-card {
+          background: #2d2d2d;
+          border: 1px solid #333;
+          border-radius: 12px;
+          padding: 1.5rem;
+          transition: all 0.3s ease;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+      }
+
+      .material-card:hover {
+          border-color: #3498db;
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
+      }
+
+      .material-card.new {
+          border-color: #e74c3c;
+          box-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+      }
+
+      .material-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 1rem;
+      }
+
+      .material-title {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #3498db;
+          margin-bottom: 0.5rem;
+      }
+
+      .material-category {
+          background: #3498db;
+          color: white;
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 500;
+      }
+
+      .material-description {
+          color: #95a5a6;
+          margin-bottom: 1rem;
+          line-height: 1.5;
+          font-size: 0.9rem;
+      }
+
+      .material-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+      }
+
+      .material-type {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #95a5a6;
+          font-size: 0.9rem;
+      }
+
+      .material-date {
+          color: #6c757d;
+          font-size: 0.8rem;
+      }
+
+      .material-actions {
+          display: flex;
+          gap: 0.5rem;
+      }
+
+      .action-btn {
+          background: #3498db;
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: background-color 0.2s ease;
+      }
+
+      .action-btn:hover {
+          background: #2980b9;
+      }
+
+      .action-btn.secondary {
+          background: #6c757d;
+      }
+
+      .action-btn.secondary:hover {
+          background: #5a6268;
+      }
+
+      .no-materials {
+          text-align: center;
+          padding: 3rem 2rem;
+          background: #2d2d2d;
+          border-radius: 12px;
+          color: #95a5a6;
+          border: 2px dashed #333;
+      }
+
+      .no-materials-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+          opacity: 0.5;
+      }
+
+      .curriculum-tabs {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+          overflow-x: auto;
+          padding-bottom: 0.5rem;
+      }
+
+      .tab {
+          padding: 0.75rem 1.5rem;
+          background: #2d2d2d;
+          border: 1px solid #333;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+          font-size: 0.9rem;
+      }
+
+      .tab.active {
+          background: #3498db;
+          border-color: #3498db;
+      }
+
+      .tab:hover:not(.active) {
+          background: #3d3d3d;
+      }
+
+      .chapter-title {
+          color: #3498db;
+          font-size: 1.3rem;
+          font-weight: 600;
+          margin-bottom: 1.5rem;
+          border-bottom: 2px solid #3498db;
+          padding-bottom: 0.5rem;
+      }
+
+      .problems-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 1.5rem;
+      }
+
+      .problem-card {
+          background: #1a1a1a;
+          border: 1px solid #333;
+          border-radius: 12px;
+          padding: 1.5rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+      }
+
+      .problem-card:hover {
+          border-color: #3498db;
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
+      }
+
+      .problem-title {
+          font-size: 1.2rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+          color: #3498db;
+      }
+
+      .problem-description {
+          color: #95a5a6;
+          margin-bottom: 1rem;
+          line-height: 1.5;
+          font-size: 0.95rem;
+      }
+
+      .problem-meta {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .difficulty {
+          padding: 0.25rem 0.75rem;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 500;
+      }
+
+      .difficulty.very-easy {
+          background: linear-gradient(135deg, #2ecc71, #27ae60);
+          color: white;
+      }
+
+      .difficulty.easy {
+          background: linear-gradient(135deg, #3498db, #2980b9);
+          color: white;
+      }
+
+      .difficulty.medium {
+          background: linear-gradient(135deg, #f39c12, #e67e22);
+          color: white;
+      }
+
+      .difficulty.hard {
+          background: linear-gradient(135deg, #e74c3c, #c0392b);
+          color: white;
+      }
+
+      .difficulty.very-hard {
+          background: linear-gradient(135deg, #8e44ad, #732d91);
+          color: white;
+      }
+
+      .solve-count {
+          color: #95a5a6;
+          font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+          .container {
+              padding: 1rem;
+          }
+          
+          .problems-grid, .materials-grid {
+              grid-template-columns: 1fr;
+          }
+          
+          .curriculum-tabs {
+              gap: 0.25rem;
+          }
+          
+          .tab {
+              padding: 0.5rem 1rem;
+              font-size: 0.8rem;
+          }
+
+          .section-header {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 1rem;
+          }
+
+          .material-header {
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 0.5rem;
+          }
+
+          .material-actions {
+              width: 100%;
+              justify-content: stretch;
+          }
+
+          .action-btn {
+              flex: 1;
+          }
+      }
+  </style>
+</head>
+<body>
+  <div class="header">
+      <div class="logo">
+          💻 코딩 연습
+      </div>
+      <a href="/" class="back-btn">← 홈으로</a>
+  </div>
+
+  <div class="container">
+      <div class="shared-materials-section">
+          <div class="section-header">
+              <h2 class="section-title">
+                  📚 공유된 학습자료
+              </h2>
+              <div class="material-notification" id="materialNotification">
+                  새 자료 도착!
+              </div>
+          </div>
+          
+          <div class="materials-grid" id="sharedMaterialsGrid">
+          </div>
+          
+          <div class="no-materials" id="noMaterials">
+              <div class="no-materials-icon">📄</div>
+              <p><strong>아직 공유된 학습자료가 없습니다</strong></p>
+              <p>강사님이 자료를 공유하면 이곳에 표시됩니다</p>
+          </div>
+      </div>
+
+      <div class="curriculum-tabs">
+      </div>
+
+      <div id="chapterTitle" class="chapter-title">로딩 중...</div>
+
+      <div class="problems-grid" id="problemsGrid">
+      </div>
+  </div>
+
+   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+   <script src="/js/student-activity.js"></script>
+
+<script>
+   let allCategories = [];
+   let categoryProblems = {};
+   let sharedMaterials = [];
+   let stompClient = null;
+   let connected = false;
+
+   function getAuthToken() {
+       return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+   }
+
+   function getCurrentUserId() {
+       const token = getAuthToken();
+       if (!token) return null;
+       
+       try {
+           const payload = JSON.parse(atob(token.split('.')[1]));
+           return payload.userId || payload.id;
+       } catch (e) {
+           console.error('토큰 파싱 오류:', e);
+           return null;
+       }
+   }
+
+   function connectWebSocket() {
+       const token = getAuthToken();
+       if (!token) {
+           console.log('토큰이 없어서 WebSocket 연결 불가');
+           return;
+       }
+
+       const socket = new SockJS('/ws');
+       stompClient = Stomp.over(socket);
+       
+       stompClient.debug = function(str) {
+           console.log('STOMP Debug: ' + str);
+       };
+       
+       stompClient.connect({}, function(frame) {
+           console.log('practice.html WebSocket 연결 성공:', frame);
+           connected = true;
+           
+           stompClient.subscribe('/topic/students', function(message) {
+               console.log('practice.html에서 메시지 수신:', message.body);
+               try {
+                   const notification = JSON.parse(message.body);
+                   if (notification.type === 'material_shared') {
+                       handleNewMaterial(notification);
+                   }
+               } catch (e) {
+                   console.error('메시지 파싱 오류:', e);
+               }
+           });
+           
+           const userId = getCurrentUserId();
+           if (userId) {
+               stompClient.subscribe(`/user/queue/materials`, function(message) {
+                   console.log('개인 자료 알림 수신:', message.body);
+                   try {
+                       const notification = JSON.parse(message.body);
+                       if (notification.type === 'material_shared') {
+                           handleNewMaterial(notification);
+                       }
+                   } catch (e) {
+                       console.error('개인 알림 파싱 오류:', e);
+                   }
+               });
+           }
+           
+       }, function(error) {
+           console.error('practice.html WebSocket 연결 실패:', error);
+           connected = false;
+           
+           setTimeout(() => {
+               if (!connected) {
+                   console.log('WebSocket 재연결 시도...');
+                   connectWebSocket();
+               }
+           }, 3000);
+       });
+   }
+
+   function handleNewMaterial(notification) {
+       console.log('새 자료 처리:', notification);
+       
+       const materialNotification = document.getElementById('materialNotification');
+       if (materialNotification) {
+           materialNotification.style.display = 'block';
+           materialNotification.textContent = notification.message || '새 자료가 공유되었습니다!';
+           
+           materialNotification.style.animation = 'pulse 2s infinite';
+           
+           setTimeout(() => {
+               materialNotification.style.display = 'none';
+               materialNotification.style.animation = '';
+           }, 8000);
+       }
+       
+       if (Notification.permission === 'granted') {
+           new Notification('새 학습자료 공유', {
+               body: notification.message,
+               icon: '/favicon.ico'
+           });
+       }
+       
+       setTimeout(() => {
+           console.log('자료 목록 새로고침 시작');
+           loadSharedMaterials();
+       }, 1000);
+   }
+
+   async function loadSharedMaterials() {
+       try {
+           const token = getAuthToken();
+           const response = await fetch('/api/teacher/shared-materials', {
+               headers: {
+                   'Authorization': `Bearer ${token}`,
+                   'Content-Type': 'application/json'
+               }
+           });
+           
+           if (response.ok) {
+               sharedMaterials = await response.json();
+               renderSharedMaterials();
+           } else {
+               console.error('공유 자료 로딩 실패:', response.status);
+           }
+       } catch (error) {
+           console.error('공유 자료 로딩 실패:', error);
+       }
+   }
+
+   function renderSharedMaterials() {
+       const grid = document.getElementById('sharedMaterialsGrid');
+       const noMaterials = document.getElementById('noMaterials');
+       
+       if (sharedMaterials.length === 0) {
+           grid.style.display = 'none';
+           noMaterials.style.display = 'block';
+           return;
+       }
+       
+       grid.style.display = 'grid';
+       noMaterials.style.display = 'none';
+       grid.innerHTML = '';
+       
+       sharedMaterials.forEach(material => {
+           const card = createMaterialCard(material);
+           grid.appendChild(card);
+       });
+   }
+
+   function createMaterialCard(material) {
+       const card = document.createElement('div');
+       card.className = 'material-card';
+       
+       const isNew = isNewMaterial(material.createdAt);
+       if (isNew) {
+           card.classList.add('new');
+       }
+       
+       const fileIcon = getFileIcon(material.fileType || material.type);
+       const fileSize = material.fileSize ? formatFileSize(material.fileSize) : '';
+       
+       card.innerHTML = `
+           <div class="material-header">
+               <div class="material-title">${material.title}</div>
+               <div class="material-category">${material.category || '일반'}</div>
+           </div>
+           <div class="material-description">${material.description || '설명이 없습니다.'}</div>
+           <div class="material-meta">
+               <div class="material-type">
+                   <span>${fileIcon}</span>
+                   <span>${(material.fileType || material.type || 'file').toUpperCase()}</span>
+                   ${fileSize ? `<span>(${fileSize})</span>` : ''}
+               </div>
+               <div class="material-date">${formatDate(material.createdAt)}</div>
+           </div>
+           <div class="material-actions">
+               ${(material.fileType === 'youtube' || material.type === 'youtube') ? 
+                   `<button class="action-btn" onclick="openYoutube('${material.youtubeUrl || material.url}')">▶️ 시청하기</button>` :
+                   `<button class="action-btn" onclick="downloadMaterial(${material.id})">📥 다운로드</button>`
+               }
+               <button class="action-btn secondary" onclick="viewMaterial(${material.id})">👁️ 미리보기</button>
+           </div>
+       `;
+       
+       return card;
+   }
+
+   function getFileIcon(fileType) {
+       const icons = {
+           'pdf': '📄',
+           'ppt': '📊',
+           'pptx': '📊',
+           'doc': '📝',
+           'docx': '📝',
+           'jpg': '🖼️',
+           'jpeg': '🖼️',
+           'png': '🖼️',
+           'gif': '🖼️',
+           'mp4': '🎥',
+           'avi': '🎥',
+           'mov': '🎥',
+           'youtube': '📺',
+           'zip': '📦',
+           'rar': '📦'
+       };
+       return icons[fileType?.toLowerCase()] || '📄';
+   }
+
+   function formatFileSize(bytes) {
+       if (bytes === 0) return '0 Bytes';
+       const k = 1024;
+       const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+       const i = Math.floor(Math.log(bytes) / Math.log(k));
+       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+   }
+
+   function formatDate(dateString) {
+       const date = new Date(dateString);
+       const now = new Date();
+       const diffTime = Math.abs(now - date);
+       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+       
+       if (diffDays === 1) return '오늘';
+       if (diffDays === 2) return '어제';
+       if (diffDays <= 7) return `${diffDays - 1}일 전`;
+       
+       return date.toLocaleDateString('ko-KR');
+   }
+
+   function isNewMaterial(dateString) {
+       const date = new Date(dateString);
+       const now = new Date();
+       const diffTime = Math.abs(now - date);
+       const diffHours = diffTime / (1000 * 60 * 60);
+       return diffHours <= 24;
+   }
+
+   function openYoutube(url) {
+       window.open(url, '_blank');
+   }
+
+   async function downloadMaterial(materialId) {
+       try {
+           const token = getAuthToken();
+           const response = await fetch(`/api/teacher/materials/${materialId}/download`, {
+               headers: {
+                   'Authorization': `Bearer ${token}`
+               }
+           });
+           
+           if (response.ok) {
+               const blob = await response.blob();
+               const url = window.URL.createObjectURL(blob);
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `material_${materialId}`;
+               document.body.appendChild(a);
+               a.click();
+               window.URL.revokeObjectURL(url);
+               document.body.removeChild(a);
+           } else {
+               alert('파일 다운로드에 실패했습니다.');
+           }
+       } catch (error) {
+           console.error('다운로드 실패:', error);
+           alert('파일 다운로드 중 오류가 발생했습니다.');
+       }
+   }
+
+   function viewMaterial(materialId) {
+       window.open(`/api/teacher/materials/${materialId}/view`, '_blank');
+   }
+
+   async function loadCategories() {
+       try {
+           const response = await fetch('/practice/api/categories');
+           const categories = await response.json();
+           
+           const categoryOrder = [
+               'HTML 기초', 'CSS 기초', 'JavaScript 기초',
+               'Java 기초', '객체지향', 'Java 심화',
+               'DB/SQL', 'JDBC', 'JPA',
+               'Servlet/JSP', 'Spring Framework', 'Spring Boot',
+               'MyBatis', '최종 프로젝트'
+           ];
+           
+           allCategories = categoryOrder.filter(cat => categories.includes(cat));
+           
+           renderTabs();
+           if (allCategories.length > 0) {
+               showCurriculum(allCategories[0]);
+           }
+       } catch (error) {
+           console.error('카테고리 로딩 실패:', error);
+       }
+   }
+
+   async function loadProblems(category) {
+       try {
+           const response = await fetch(`/practice/api/problems?category=${encodeURIComponent(category)}`);
+           const problems = await response.json();
+           categoryProblems[category] = problems;
+           return problems;
+       } catch (error) {
+           console.error('문제 로딩 실패:', error);
+           return [];
+       }
+   }
+
+   function renderTabs() {
+       const tabsContainer = document.querySelector('.curriculum-tabs');
+       tabsContainer.innerHTML = '';
+       
+       allCategories.forEach((category, index) => {
+           const tab = document.createElement('div');
+           tab.className = `tab ${index === 0 ? 'active' : ''}`;
+           tab.textContent = category;
+           tab.addEventListener('click', () => showCurriculum(category));
+           tabsContainer.appendChild(tab);
+       });
+   }
+
+   async function showCurriculum(category) {
+       const activeTab = document.querySelector('.tab.active');
+       if (activeTab) {
+           activeTab.classList.remove('active');
+       }
+       
+       const tabs = document.querySelectorAll('.tab');
+       tabs.forEach(tab => {
+           if (tab.textContent === category) {
+               tab.classList.add('active');
+           }
+       });
+       
+       document.getElementById('chapterTitle').textContent = category;
+       
+       let problems = categoryProblems[category];
+       if (!problems) {
+           problems = await loadProblems(category);
+       }
+       
+       renderProblems(problems);
+   }
+
+   function renderProblems(problems) {
+       const grid = document.getElementById('problemsGrid');
+       grid.innerHTML = '';
+       
+       problems.forEach(problem => {
+           const card = createProblemCard(problem);
+           grid.appendChild(card);
+       });
+   }
+
+   function createProblemCard(problem) {
+       const card = document.createElement('div');
+       card.className = 'problem-card';
+       card.addEventListener('click', () => solveProblem(problem.problemId));
+       
+       card.innerHTML = `
+           <div class="problem-title">${problem.title}</div>
+           <div class="problem-description">${problem.description}</div>
+           <div class="problem-meta">
+               <span class="difficulty ${getDifficultyClass(problem.difficulty)}">${problem.difficulty}</span>
+           </div>
+       `;
+       
+       return card;
+   }
+
+   function getDifficultyClass(difficulty) {
+       if (difficulty === '매우 쉬움') return 'very-easy';
+       if (difficulty === '쉬움') return 'easy';
+       if (difficulty === '보통') return 'medium';
+       if (difficulty === '어려움') return 'hard';
+       if (difficulty === '매우 어려움') return 'very-hard';
+       return 'easy';
+   }
+   
+   function solveProblem(problemId) {
+       window.location.href = `/practice/solve/${problemId}`;
+   }
+
+   function initializePage() {
+       console.log('페이지 초기화 시작');
+       
+       if ('Notification' in window && Notification.permission === 'default') {
+           Notification.requestPermission().then(permission => {
+               console.log('알림 권한:', permission);
+           });
+       }
+       
+       loadCategories();
+       loadSharedMaterials();
+       connectWebSocket();
+       
+       console.log('페이지 초기화 완료');
+   }
+
+   window.addEventListener('beforeunload', () => {
+       if (stompClient && connected) {
+           stompClient.disconnect();
+       }
+   });
+
+   document.addEventListener('DOMContentLoaded', initializePage);
+</script>
+</body>
+</html>

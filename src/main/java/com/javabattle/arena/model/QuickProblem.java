@@ -1,0 +1,62 @@
+package com.javabattle.arena.model;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "QUICK_PROBLEMS")
+public class QuickProblem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "quick_problem_seq")
+    @SequenceGenerator(name = "quick_problem_seq", sequenceName = "QUICK_PROBLEM_SEQ", allocationSize = 1)
+    private Long id;
+    
+    @Column(name = "teacher_id")
+    private Long teacherId;
+    
+    @Column(name = "title")
+    private String title;
+    
+    @Column(name = "description", length = 2000)
+    private String description;
+    
+    @Column(name = "time_limit")
+    private Integer timeLimit = 10;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+    
+    public QuickProblem() {}
+    
+    public QuickProblem(Long teacherId, String title, String description, Integer timeLimit) {
+        this.teacherId = teacherId;
+        this.title = title;
+        this.description = description;
+        this.timeLimit = timeLimit;
+        this.createdAt = LocalDateTime.now();
+    }
+    
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public Long getTeacherId() { return teacherId; }
+    public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
+    
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    
+    public Integer getTimeLimit() { return timeLimit; }
+    public void setTimeLimit(Integer timeLimit) { this.timeLimit = timeLimit; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+}

@@ -1,0 +1,15 @@
+
+    @Column(name = "author_type")
+    private String authorType = "STUDENT";
+    
+    @Column(name = "is_shared")
+    private Boolean isShared = false;
+    
+    @Column(name = "visibility")
+    private String visibility = "PRIVATE";
+    
+    @Column(name = "parent_material_id")
+    private Long parentMaterialId; // 쌤 자료 참조용
+    
+    @Column(name = "assignment_id")
+    private Long assignmentId;

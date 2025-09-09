@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>혼자 연습 - Java Battle Arena</title>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2d2d2d;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .battle-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .timer {
+            background: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .mode-badge {
+            background: #f39c12;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .main-container {
+            height: calc(100vh - 60px);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .problem-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .problem-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #3498db;
+        }
+
+        .problem-description {
+            line-height: 1.6;
+            color: #e0e0e0;
+            white-space: pre-line;
+        }
+
+        .code-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .code-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #252525;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .code-title {
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .code-editor {
+            flex: 1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            border: none;
+            outline: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .result-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            background: #252525;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #f39c12;
+        }
+
+        .result-content {
+            flex: 1;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-y: auto;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .status-section {
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .status-message {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #27ae60;
+        }
+
+        .status-detail {
+            font-size: 14px;
+            color: #95a5a6;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .next-problem-btn {
+            background: #8e44ad;
+            color: white;
+        }
+
+        .next-problem-btn:hover {
+            background: #7d3c98;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← 홈으로</a>
+
+    <div class="header">
+        <div class="logo">
+            <span>🎯</span>
+            <span>혼자 연습</span>
+        </div>
+        <div class="battle-info">
+            <div class="mode-badge">Solo Mode</div>
+            <div class="timer" id="timer">무제한</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="problem-section">
+                <div class="problem-title" id="problemTitle">두 수의 합</div>
+                <div class="problem-description" id="problemDescription">두 정수 A와 B를 입력받은 다음, A+B를 출력하는 프로그램을 작성하시오.
+
+입력:
+첫째 줄에 A와 B가 주어진다. (0 < A, B < 10)
+
+출력:
+첫째 줄에 A+B를 출력한다.
+
+예제 입력:
+1 2
+
+예제 출력:
+3</div>
+            </div>
+            
+            <div class="code-section">
+                <div class="code-header">
+                    <div class="code-title">내 코드</div>
+                    <div class="code-actions">
+                        <button class="btn btn-primary" onclick="runCode()">실행</button>
+                        <button class="btn btn-success" onclick="submitCode()">제출</button>
+                        <button class="btn next-problem-btn" onclick="nextProblem()">다음 문제</button>
+                    </div>
+                </div>
+                <textarea class="code-editor" id="codeEditor" placeholder="여기에 코드를 작성하세요...">import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int a = sc.nextInt();
+        int b = sc.nextInt();
+        System.out.println(a + b);
+    }
+}</textarea>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="status-section">
+                <div class="status-message" id="statusMessage">연습 모드</div>
+                <div class="status-detail" id="statusDetail">자유롭게 코드를 작성하고 테스트해보세요</div>
+            </div>
+
+            <div class="result-section">
+                <div class="result-header">
+                    <div class="result-title">실행 결과</div>
+                </div>
+                <div class="result-content" id="resultContent">코드를 실행하면 결과가 여기에 표시됩니다...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let problems = [
+            {
+                title: "두 수의 합",
+                description: `두 정수 A와 B를 입력받은 다음, A+B를 출력하는 프로그램을 작성하시오.
+
+입력:
+첫째 줄에 A와 B가 주어진다. (0 < A, B < 10)
+
+출력:
+첫째 줄에 A+B를 출력한다.
+
+예제 입력:
+1 2
+
+예제 출력:
+3`
+            },
+            {
+                title: "A-B",
+                description: `두 정수 A와 B를 입력받은 다음, A-B를 출력하는 프로그램을 작성하시오.
+
+입력:
+첫째 줄에 A와 B가 주어진다. (0 < A, B < 10)
+
+출력:
+첫째 줄에 A-B를 출력한다.
+
+예제 입력:
+3 2
+
+예제 출력:
+1`
+            },
+            {
+                title: "A×B",
+                description: `두 정수 A와 B를 입력받은 다음, A×B를 출력하는 프로그램을 작성하시오.
+
+입력:
+첫째 줄에 A와 B가 주어진다. (1 ≤ A, B ≤ 9)
+
+출력:
+첫째 줄에 A×B를 출력한다.
+
+예제 입력:
+1 2
+
+예제 출력:
+2`
+            }
+        ];
+
+        let currentProblemIndex = 0;
+
+        function runCode() {
+            const code = document.getElementById('codeEditor').value;
+            
+            fetch('/api/practice/run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                },
+                body: JSON.stringify({ code: code, input: "1 2" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContent = document.getElementById('resultContent');
+                if (data.success) {
+                    resultContent.innerHTML = `<div style="color: #27ae60;">✅ 실행 성공</div><br>출력:<br>${data.output}`;
+                } else {
+                    resultContent.innerHTML = `<div style="color: #e74c3c;">❌ 실행 실패</div><br>에러:<br>${data.error}`;
+                }
+            })
+            .catch(error => {
+                console.error('코드 실행 실패:', error);
+                document.getElementById('resultContent').innerHTML = `<div style="color: #e74c3c;">❌ 서버 오류</div><br>코드 실행에 실패했습니다.`;
+            });
+        }
+
+        function submitCode() {
+            const code = document.getElementById('codeEditor').value;
+            
+            fetch('/api/practice/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                },
+                body: JSON.stringify({ 
+                    code: code, 
+                    problemId: currentProblemIndex + 1 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContent = document.getElementById('resultContent');
+                if (data.success) {
+                    resultContent.innerHTML = `<div style="color: #27ae60;">🎉 정답입니다!</div><br>채점 결과: 통과<br>실행 시간: ${data.executionTime || '1ms'}`;
+                    document.getElementById('statusMessage').textContent = '문제 해결 완료!';
+                    document.getElementById('statusDetail').textContent = '다음 문제에 도전해보세요';
+                } else {
+                    resultContent.innerHTML = `<div style="color: #e74c3c;">❌ 틀렸습니다</div><br>${data.message}`;
+                }
+            })
+            .catch(error => {
+                console.error('코드 제출 실패:', error);
+                document.getElementById('resultContent').innerHTML = `<div style="color: #e74c3c;">❌ 제출 실패</div><br>서버와 통신 중 오류가 발생했습니다.`;
+            });
+        }
+
+        function nextProblem() {
+            currentProblemIndex = (currentProblemIndex + 1) % problems.length;
+            const problem = problems[currentProblemIndex];
+            
+            document.getElementById('problemTitle').textContent = problem.title;
+            document.getElementById('problemDescription').textContent = problem.description;
+            document.getElementById('codeEditor').value = `import java.util.Scanner;
+
+public class Solution {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        // 여기에 코드를 작성하세요
+    }
+}`;
+            
+            document.getElementById('resultContent').textContent = '코드를 실행하면 결과가 여기에 표시됩니다...';
+            document.getElementById('statusMessage').textContent = '새 문제!';
+            document.getElementById('statusDetail').textContent = '문제를 읽고 코드를 작성해보세요';
+        }
+
+        window.onload = function() {
+            const token = localStorage.getItem('jwtToken');
+            if (!token) {
+                alert('로그인이 필요합니다.');
+                window.location.href = '/';
+                return;
+            }
+        };
+    </script>
+</body>
+</html>

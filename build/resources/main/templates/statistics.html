@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학습 통계 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        .header {
+            background: white;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .nav-tabs {
+            background: white;
+            padding: 0 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .nav-tab {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        .nav-tab:hover {
+            color: #3498db;
+        }
+        .content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #3498db;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #3498db;
+            line-height: 1;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #e9ecef;
+        }
+        .chart-container.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+        .chart-canvas {
+            height: 250px !important;
+        }
+        .leaderboard {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #e9ecef;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background 0.3s ease;
+        }
+        .leaderboard-item:hover {
+            background: #f8f9fa;
+        }
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        .rank {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+        .rank.gold { background: #f39c12; }
+        .rank.silver { background: #95a5a6; }
+        .rank.bronze { background: #e67e22; }
+        .student-info {
+            flex: 1;
+        }
+        .student-name {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.3rem;
+        }
+        .student-stats {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .score {
+            text-align: right;
+        }
+        .score-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #3498db;
+        }
+        .score-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .refresh-btn {
+            position: fixed;
+            top: 5rem;
+            right: 2rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        .refresh-btn:hover {
+            background: #2980b9;
+            transform: rotate(180deg) scale(1.1);
+        }
+        .search-box {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #e9ecef;
+            margin-bottom: 2rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Pretendard Variable', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+        .detail-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        .progress-bar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            height: 20px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .progress-text {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .action-btn {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: #6c757d;
+            text-decoration: none;
+        }
+        .action-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+            transform: translateY(-2px);
+        }
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .action-desc {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background: #f8f9fa;
+            color: #2c3e50;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Pretendard Variable', sans-serif;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .option-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .option-input {
+            flex: 1;
+            padding: 0.6rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Pretendard Variable', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .option-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s ease;
+        }
+        
+        .option-remove:hover {
+            background: #c0392b;
+        }
+        
+        .add-option-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .add-option-btn:hover {
+            background: #229954;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Pretendard Variable', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .schedule-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .schedule-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .schedule-option input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+        
+        .datetime-input {
+            margin-left: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="refresh-btn" onclick="refreshData()">🔄</button>
+
+    <div class="header">
+        <h1>학습 통계 대시보드</h1>
+        <p>학생들의 학습 진도와 성과를 한눈에 확인하세요</p>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('overview')">전체 현황</button>
+        <button class="nav-tab" onclick="switchTab('leaderboard')">학생 랭킹</button>
+        <button class="nav-tab" onclick="switchTab('individual')">개별 통계</button>
+        <button class="nav-tab" onclick="switchTab('analytics')">심화 분석</button>
+    </div>
+
+    <div class="content">
+        <div id="overview" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">전체 학생 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeUsers">0</div>
+                    <div class="stat-label">활성 학생 (7일)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgProblems">0</div>
+                    <div class="stat-label">평균 문제 해결 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgStudyTime">0</div>
+                    <div class="stat-label">평균 학습 시간(분)</div>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <a href="/teacher" class="action-btn">
+                    <div class="action-title">실시간 모니터링</div>
+                    <div class="action-desc">학생 활동 상황 확인</div>
+                </a>
+                <a href="#" class="action-btn" onclick="exportReport()">
+                    <div class="action-title">리포트 내보내기</div>
+                    <div class="action-desc">통계 데이터 다운로드</div>
+                </a>
+                <a href="#" class="action-btn" onclick="sendBulkMessage()">
+                    <div class="action-title">전체 공지 전송</div>
+                    <div class="action-desc">모든 학생에게 메시지</div>
+                </a>
+                <a href="#" class="action-btn" onclick="openQuizModal()">
+                    <div class="action-title">퀴즈 예약</div>
+                    <div class="action-desc">시간 지정 퀴즈 설정</div>
+                </a>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">일일 활동 현황</div>
+                    <canvas id="activityChart" class="chart-canvas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">문제 해결률 분포</div>
+                    <canvas id="problemChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container full-width">
+                <div class="chart-title">주간 학습 트렌드</div>
+                <canvas id="weeklyChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+
+        <div id="leaderboard" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="topScore">0</div>
+                    <div class="stat-label">최고 해결 문제 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgRank">0%</div>
+                    <div class="stat-label">평균 정답률</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="mostActive">0</div>
+                    <div class="stat-label">최다 학습 시간</div>
+                </div>
+            </div>
+
+            <div class="leaderboard">
+                <div class="chart-title">학생 순위 (문제 해결 수 기준)</div>
+                <div id="leaderboardList">
+                    <div class="empty-state">데이터를 불러오는 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="individual" class="tab-content">
+            <div class="search-box">
+                <input type="text" class="search-input" id="studentSearch" 
+                       placeholder="학생 이름 또는 ID로 검색..." 
+                       onkeyup="searchStudent(event)">
+            </div>
+            
+            <div id="studentDetails" class="empty-state">
+                학생을 검색하여 상세 통계를 확인하세요
+            </div>
+        </div>
+
+        <div id="analytics" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-title">학습 시간 분포</div>
+                    <canvas id="timeDistChart" class="chart-canvas"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">카테고리별 성과</div>
+                    <canvas id="categoryChart" class="chart-canvas"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container full-width">
+                <div class="chart-title">월별 진도 비교</div>
+                <canvas id="monthlyChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quizModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">퀴즈 생성</h3>
+                <button class="modal-close" onclick="closeQuizModal()">×</button>
+            </div>
+            
+            <form id="quizForm">
+                <div class="form-group">
+                    <label class="form-label">퀴즈 제목</label>
+                    <input type="text" class="form-input" id="quizTitle" placeholder="퀴즈 제목을 입력하세요" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">문제</label>
+                    <textarea class="form-textarea" id="quizQuestion" placeholder="문제를 입력하세요" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">선택지</label>
+                    <div id="optionsList">
+                        <div class="option-group">
+                            <input type="text" class="option-input" placeholder="선택지 1" required>
+                            <button type="button" class="option-remove" onclick="removeOption(this)">삭제</button>
+                        </div>
+                        <div class="option-group">
+                            <input type="text" class="option-input" placeholder="선택지 2" required>
+                            <button type="button" class="option-remove" onclick="removeOption(this)">삭제</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-option-btn" onclick="addOption()">+ 선택지 추가</button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">정답</label>
+                    <select class="form-input" id="correctAnswer" required>
+                        <option value="">정답을 선택하세요</option>
+                        <option value="0">선택지 1</option>
+                        <option value="1">선택지 2</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">퀴즈 시작 시간</label>
+                    <div class="schedule-section">
+                        <div class="schedule-option">
+                            <input type="radio" id="startNow" name="schedule" value="now" checked>
+                            <label for="startNow">지금 시작</label>
+                        </div>
+                        <div class="schedule-option">
+                            <input type="radio" id="startLater" name="schedule" value="later">
+                            <label for="startLater">예약 시작</label>
+                            <input type="datetime-local" class="datetime-input" id="scheduleTime" disabled>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeQuizModal()">취소</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuiz()">퀴즈 생성</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let overviewData = {};
+        let leaderboardData = [];
+        let charts = {};
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'leaderboard') {
+                loadLeaderboard();
+            } else if (tabName === 'analytics') {
+                createAnalyticsCharts();
+            }
+        }
+
+        function refreshData() {
+            loadOverview();
+            loadLeaderboard();
+        }
+
+        function loadOverview() {
+            fetch('/api/statistics/overview')
+                .then(response => response.json())
+                .then(data => {
+                    overviewData = data;
+                    updateOverviewStats();
+                    createCharts();
+                })
+                .catch(error => {
+                    console.error('개요 데이터 로드 실패:', error);
+                });
+        }
+
+        function updateOverviewStats() {
+            document.getElementById('totalUsers').textContent = overviewData.totalUsers || 0;
+            document.getElementById('activeUsers').textContent = overviewData.activeUsers || 0;
+            document.getElementById('avgProblems').textContent = Math.round(overviewData.averageProblems || 0);
+            document.getElementById('avgStudyTime').textContent = Math.round(overviewData.averageStudyTime || 0);
+        }
+
+        function createCharts() {
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            const problemCtx = document.getElementById('problemChart').getContext('2d');
+            const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+
+            if (charts.activity) charts.activity.destroy();
+            if (charts.problem) charts.problem.destroy();
+            if (charts.weekly) charts.weekly.destroy();
+
+            charts.activity = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['월', '화', '수', '목', '금', '토', '일'],
+                    datasets: [{
+                        label: '활성 사용자',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            charts.problem = new Chart(problemCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['0-5문제', '6-10문제', '11-20문제', '20문제 이상'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#e74c3c', '#f39c12', '#3498db', '#27ae60']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            charts.weekly = new Chart(weeklyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1주차', '2주차', '3주차', '4주차'],
+                    datasets: [{
+                        label: '학습 시간',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function createAnalyticsCharts() {
+            const timeDistCtx = document.getElementById('timeDistChart').getContext('2d');
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+
+            if (charts.timeDist) charts.timeDist.destroy();
+            if (charts.category) charts.category.destroy();
+            if (charts.monthly) charts.monthly.destroy();
+
+            charts.timeDist = new Chart(timeDistCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-30분', '30-60분', '60-120분', '120분+'],
+                    datasets: [{
+                        label: '학생 수',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            charts.category = new Chart(categoryCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['기초', '조건문', '반복문', '배열', '함수', '객체지향'],
+                    datasets: [{
+                        label: '평균 점수',
+                        data: [0, 0, 0, 0, 0, 0],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        r: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+
+            charts.monthly = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
+                    datasets: [{
+                        label: '전체 진도율',
+                        data: [0, 0, 0, 0, 0, 0],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function loadLeaderboard() {
+            fetch('/api/statistics/leaderboard')
+                .then(response => response.json())
+                .then(data => {
+                    leaderboardData = data;
+                    renderLeaderboard();
+                    updateLeaderboardStats();
+                })
+                .catch(error => {
+                    console.error('리더보드 데이터 로드 실패:', error);
+                    document.getElementById('leaderboardList').innerHTML = 
+                        '<div class="empty-state">데이터를 불러올 수 없습니다</div>';
+                });
+        }
+
+        function updateLeaderboardStats() {
+            if (leaderboardData.length > 0) {
+                const topScore = Math.max(...leaderboardData.map(s => s.problemsSolved));
+                const avgAccuracy = leaderboardData.reduce((sum, s) => sum + s.accuracy, 0) / leaderboardData.length;
+                const mostActive = Math.max(...leaderboardData.map(s => s.studyTime));
+                
+                document.getElementById('topScore').textContent = topScore;
+                document.getElementById('avgRank').textContent = Math.round(avgAccuracy) + '%';
+                document.getElementById('mostActive').textContent = mostActive;
+            }
+        }
+
+        function renderLeaderboard() {
+            const container = document.getElementById('leaderboardList');
+            
+            if (leaderboardData.length === 0) {
+                container.innerHTML = '<div class="empty-state">등록된 학생이 없습니다</div>';
+                return;
+            }
+
+            container.innerHTML = leaderboardData.map((student, index) => {
+                let rankClass = '';
+                if (index === 0) rankClass = 'gold';
+                else if (index === 1) rankClass = 'silver';
+                else if (index === 2) rankClass = 'bronze';
+
+                return `
+                    <div class="leaderboard-item">
+                        <div class="rank ${rankClass}">${index + 1}</div>
+                        <div class="student-info">
+                            <div class="student-name">${student.nickname}</div>
+                            <div class="student-stats">
+                                학습시간: ${student.studyTime}분 | 정확도: ${student.accuracy.toFixed(1)}%
+                            </div>
+                        </div>
+                        <div class="score">
+                            <div class="score-number">${student.problemsSolved}</div>
+                            <div class="score-label">문제 해결</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function searchStudent(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value.trim();
+                if (!query) return;
+
+                if (isNaN(query)) {
+                    const student = leaderboardData.find(s => 
+                        s.nickname.toLowerCase().includes(query.toLowerCase())
+                    );
+                    if (student) {
+                        loadStudentDetails(student.userId);
+                    } else {
+                        document.getElementById('studentDetails').innerHTML = 
+                            '<div class="empty-state">해당 학생을 찾을 수 없습니다</div>';
+                    }
+                } else {
+                    loadStudentDetails(parseInt(query));
+                }
+            }
+        }
+
+        function loadStudentDetails(userId) {
+            fetch(`/api/statistics/user/${userId}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderStudentDetails(data, userId);
+                })
+                .catch(error => {
+                    console.error('학생 데이터 로드 실패:', error);
+                    document.getElementById('studentDetails').innerHTML = 
+                        '<div class="empty-state">학생 정보를 불러올 수 없습니다</div>';
+                });
+        }
+
+        function renderStudentDetails(stats, userId) {
+            const container = document.getElementById('studentDetails');
+            
+            container.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-title">학습 현황</div>
+                    <div style="margin: 1rem 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>문제 해결률</span>
+                            <span>${stats.accuracy.toFixed(1)}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${stats.accuracy}%">
+                                <div class="progress-text">${stats.problemsSolved}/${stats.problemsAttempted}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin: 1rem 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span>퀴즈 정답률</span>
+                            <span>${stats.quizAccuracy.toFixed(1)}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${stats.quizAccuracy}%">
+                                <div class="progress-text">${stats.quizCorrect}/${stats.quizTotal}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-card">
+                    <div class="detail-title">상세 통계</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #3498db;">${stats.totalStudyTime}</div>
+                            <div style="color: #6c757d; font-size: 0.9rem;">총 학습시간(분)</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #3498db;">${stats.streakDays}</div>
+                            <div style="color: #6c757d; font-size: 0.9rem;">연속 학습 일수</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function exportReport() {
+            const data = {
+                totalUsers: overviewData.totalUsers || 0,
+                activeUsers: overviewData.activeUsers || 0,
+                avgProblems: Math.round(overviewData.averageProblems || 0),
+                avgStudyTime: Math.round(overviewData.averageStudyTime || 0),
+                leaderboard: leaderboardData,
+                exportDate: new Date().toLocaleDateString('ko-KR')
+            };
+            
+            const jsonData = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `학습통계_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('통계 리포트가 다운로드되었습니다.');
+        }
+
+        function sendBulkMessage() {
+            const message = prompt('모든 학생에게 보낼 메시지를 입력하세요:');
+            if (message && message.trim()) {
+                fetch('/api/teacher/global-hint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message.trim() })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert(`전체 공지가 ${leaderboardData.length}명의 학생에게 전송되었습니다.`);
+                    } else {
+                        alert('공지 전송에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('공지 전송 실패:', error);
+                    alert('공지 전송 중 오류가 발생했습니다.');
+                });
+            }
+        }
+
+        function openQuizModal() {
+            document.getElementById('quizModal').classList.add('active');
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.remove('active');
+            resetQuizForm();
+        }
+
+        function resetQuizForm() {
+            document.getElementById('quizForm').reset();
+            document.getElementById('optionsList').innerHTML = `
+                <div class="option-group">
+                    <input type="text" class="option-input" placeholder="선택지 1" required>
+                    <button type="button" class="option-remove" onclick="removeOption(this)">삭제</button>
+                </div>
+                <div class="option-group">
+                    <input type="text" class="option-input" placeholder="선택지 2" required>
+                    <button type="button" class="option-remove" onclick="removeOption(this)">삭제</button>
+                </div>
+            `;
+            updateCorrectAnswerOptions();
+            document.getElementById('scheduleTime').disabled = true;
+        }
+
+        function addOption() {
+            const optionsList = document.getElementById('optionsList');
+            const optionCount = optionsList.children.length;
+            
+            if (optionCount >= 6) {
+                alert('최대 6개의 선택지까지 추가할 수 있습니다.');
+                return;
+            }
+            
+            const newOption = document.createElement('div');
+            newOption.className = 'option-group';
+            newOption.innerHTML = `
+                <input type="text" class="option-input" placeholder="선택지 ${optionCount + 1}" required>
+                <button type="button" class="option-remove" onclick="removeOption(this)">삭제</button>
+            `;
+            
+            optionsList.appendChild(newOption);
+            updateCorrectAnswerOptions();
+        }
+
+        function removeOption(button) {
+            const optionsList = document.getElementById('optionsList');
+            
+            if (optionsList.children.length <= 2) {
+                alert('최소 2개의 선택지가 필요합니다.');
+                return;
+            }
+            
+            button.parentElement.remove();
+            updateCorrectAnswerOptions();
+            updateOptionPlaceholders();
+        }
+
+        function updateCorrectAnswerOptions() {
+            const correctAnswerSelect = document.getElementById('correctAnswer');
+            const optionCount = document.getElementById('optionsList').children.length;
+            
+            correctAnswerSelect.innerHTML = '<option value="">정답을 선택하세요</option>';
+            
+            for (let i = 0; i < optionCount; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `선택지 ${i + 1}`;
+                correctAnswerSelect.appendChild(option);
+            }
+        }
+
+        function updateOptionPlaceholders() {
+            const options = document.querySelectorAll('.option-input');
+            options.forEach((input, index) => {
+                input.placeholder = `선택지 ${index + 1}`;
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'schedule') {
+                const scheduleTime = document.getElementById('scheduleTime');
+                scheduleTime.disabled = e.target.value === 'now';
+                
+                if (e.target.value === 'later') {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 10);
+                    scheduleTime.value = now.toISOString().slice(0, 16);
+                }
+            }
+        });
+
+        function submitQuiz() {
+            const form = document.getElementById('quizForm');
+            const title = document.getElementById('quizTitle').value.trim();
+            const question = document.getElementById('quizQuestion').value.trim();
+            const correctAnswer = parseInt(document.getElementById('correctAnswer').value);
+            const schedule = document.querySelector('input[name="schedule"]:checked').value;
+            const scheduleTime = document.getElementById('scheduleTime').value;
+            
+            if (!title || !question || isNaN(correctAnswer)) {
+                alert('모든 필수 항목을 입력해주세요.');
+                return;
+            }
+            
+            const options = [];
+            const optionInputs = document.querySelectorAll('.option-input');
+            
+            for (let input of optionInputs) {
+                const value = input.value.trim();
+                if (!value) {
+                    alert('모든 선택지를 입력해주세요.');
+                    return;
+                }
+                options.push(value);
+            }
+            
+            if (options.length < 2) {
+                alert('최소 2개의 선택지가 필요합니다.');
+                return;
+            }
+            
+            if (schedule === 'later' && !scheduleTime) {
+                alert('예약 시간을 선택해주세요.');
+                return;
+            }
+            
+            const quizData = {
+                title: title,
+                question: question,
+                options: options,
+                correctAnswer: correctAnswer,
+                schedule: schedule,
+                scheduleTime: schedule === 'later' ? scheduleTime : null
+            };
+            
+            fetch('/api/teacher/quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(quizData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(schedule === 'now' ? '퀴즈가 시작되었습니다!' : '퀴즈가 예약되었습니다!');
+                    closeQuizModal();
+                } else {
+                    alert(data.message || '퀴즈 생성에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('퀴즈 생성 실패:', error);
+                alert('퀴즈 생성 중 오류가 발생했습니다.');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverview();
+            loadLeaderboard();
+            
+            document.getElementById('quizModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeQuizModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+package com.javabattle.arena.web;
+
+import com.javabattle.arena.model.ActiveSession;
+import com.javabattle.arena.model.User;
+import com.javabattle.arena.model.QuickProblem;
+import com.javabattle.arena.repository.ActiveSessionRepository;
+import com.javabattle.arena.repository.UserRepository;
+import com.javabattle.arena.repository.QuickProblemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/teacher")
+@CrossOrigin(origins = "*")
+public class TeacherMonitorController {
+    
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+    
+    @Autowired
+    private ActiveSessionRepository sessionRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private QuickProblemRepository quickProblemRepository;
+    
+    @GetMapping("/active-students")
+    public Map<String, Object> getActiveStudents() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
+        List<ActiveSession> activeSessions = sessionRepository.findActiveSessions(cutoff);
+        
+        List<Map<String, Object>> students = activeSessions.stream()
+            .map(session -> {
+                User user = userRepository.findById(session.getUserId()).orElse(null);
+                Map<String, Object> studentMap = new HashMap<>();
+                studentMap.put("id", session.getUserId());
+                studentMap.put("nickname", user != null ? user.getNickname() : "Unknown");
+                studentMap.put("currentPage", session.getCurrentPage());
+                studentMap.put("isCoding", session.getIsCoding());
+                studentMap.put("lastActivity", session.getLastActivity());
+                studentMap.put("codeLength", session.getCurrentCode() != null ? session.getCurrentCode().length() : 0);
+                return studentMap;
+            })
+            .collect(Collectors.toList());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("students", students);
+        result.put("totalCount", students.size());
+        result.put("codingCount", students.stream().mapToInt(s -> (Boolean) s.get("isCoding") ? 1 : 0).sum());
+        
+        return result;
+    }
+    
+    @PostMapping("/send-hint")
+    public void sendHint(@RequestBody Map<String, String> request) {
+        String studentId = request.get("studentId");
+        String message = request.get("message");
+        
+        Map<String, Object> hintData = new HashMap<>();
+        hintData.put("type", "hint");
+        hintData.put("message", message);
+        hintData.put("timestamp", LocalDateTime.now());
+        
+        messagingTemplate.convertAndSend("/topic/hint/" + studentId, hintData);
+    }
+    
+    @PostMapping("/global-hint")
+    public void sendGlobalHint(@RequestBody Map<String, String> request) {
+        String message = request.get("message");
+        
+        Map<String, Object> hintData = new HashMap<>();
+        hintData.put("type", "global-hint");
+        hintData.put("message", message);
+        hintData.put("timestamp", LocalDateTime.now());
+        
+        messagingTemplate.convertAndSend("/topic/global-hint", hintData);
+    }
+    
+    @PostMapping("/create-problem")
+    public Map<String, Object> createQuickProblem(@RequestBody Map<String, String> request) {
+        String title = request.get("title");
+        String description = request.get("description");
+        
+        QuickProblem problem = new QuickProblem(1L, title, description, 10);
+        quickProblemRepository.save(problem);
+        
+        Map<String, Object> problemData = new HashMap<>();
+        problemData.put("type", "quick-problem");
+        problemData.put("id", problem.getId());
+        problemData.put("title", title);
+        problemData.put("description", description);
+        problemData.put("timeLimit", 10);
+        problemData.put("timestamp", LocalDateTime.now());
+        
+        messagingTemplate.convertAndSend("/topic/quick-problem", problemData);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("problemId", problem.getId());
+        return result;
+    }
+    
+    @PostMapping("/quick-quiz")
+    public void startQuickQuiz() {
+        Map<String, Object> quizData = new HashMap<>();
+        quizData.put("type", "quick-quiz");
+        quizData.put("question", "System.out.println의 출력 결과는?");
+        quizData.put("options", new String[]{"화면에 출력", "파일에 저장", "변수에 저장", "컴파일 에러"});
+        quizData.put("timeLimit", 30);
+        quizData.put("timestamp", LocalDateTime.now());
+        
+        messagingTemplate.convertAndSend("/topic/quick-quiz", quizData);
+    }
+    
+    @MessageMapping("/student-activity")
+    @SendTo("/topic/teacher-monitor")
+    public Map<String, Object> handleStudentActivity(Map<String, Object> activity) {
+        Long userId = Long.valueOf(activity.get("userId").toString());
+        String page = (String) activity.get("page");
+        String code = (String) activity.get("code");
+        Boolean isCoding = (Boolean) activity.get("isCoding");
+        
+        ActiveSession session = sessionRepository.findByUserId(userId)
+            .orElse(new ActiveSession(userId, "session-" + userId, page));
+        
+        session.setCurrentPage(page);
+        session.setCurrentCode(code);
+        session.setIsCoding(isCoding);
+        session.setLastActivity(LocalDateTime.now());
+        
+        sessionRepository.save(session);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("userId", userId);
+        result.put("page", page);
+        result.put("isCoding", isCoding);
+        result.put("codeLength", code != null ? code.length() : 0);
+        result.put("timestamp", LocalDateTime.now());
+        
+        return result;
+    }
+}

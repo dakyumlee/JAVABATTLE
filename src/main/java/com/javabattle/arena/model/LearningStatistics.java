@@ -1,0 +1,79 @@
+package com.javabattle.arena.model;
+
+import javax.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "LEARNING_STATISTICS")
+public class LearningStatistics {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "learning_stats_seq")
+    @SequenceGenerator(name = "learning_stats_seq", sequenceName = "LEARNING_STATS_SEQ", allocationSize = 1)
+    private Long id;
+    
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+    
+    @Column(name = "total_study_time")
+    private Integer totalStudyTime = 0;
+    
+    @Column(name = "problems_solved")
+    private Integer problemsSolved = 0;
+    
+    @Column(name = "problems_attempted")
+    private Integer problemsAttempted = 0;
+    
+    @Column(name = "quiz_correct")
+    private Integer quizCorrect = 0;
+    
+    @Column(name = "quiz_total")
+    private Integer quizTotal = 0;
+    
+    @Column(name = "last_activity")
+    private LocalDateTime lastActivity;
+    
+    @Column(name = "streak_days")
+    private Integer streakDays = 0;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    public LearningStatistics() {}
+    
+    public LearningStatistics(Long userId) {
+        this.userId = userId;
+        this.lastActivity = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+    
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+    
+    public Integer getTotalStudyTime() { return totalStudyTime; }
+    public void setTotalStudyTime(Integer totalStudyTime) { this.totalStudyTime = totalStudyTime; }
+    
+    public Integer getProblemsSolved() { return problemsSolved; }
+    public void setProblemsSolved(Integer problemsSolved) { this.problemsSolved = problemsSolved; }
+    
+    public Integer getProblemsAttempted() { return problemsAttempted; }
+    public void setProblemsAttempted(Integer problemsAttempted) { this.problemsAttempted = problemsAttempted; }
+    
+    public Integer getQuizCorrect() { return quizCorrect; }
+    public void setQuizCorrect(Integer quizCorrect) { this.quizCorrect = quizCorrect; }
+    
+    public Integer getQuizTotal() { return quizTotal; }
+    public void setQuizTotal(Integer quizTotal) { this.quizTotal = quizTotal; }
+    
+    public LocalDateTime getLastActivity() { return lastActivity; }
+    public void setLastActivity(LocalDateTime lastActivity) { this.lastActivity = lastActivity; }
+    
+    public Integer getStreakDays() { return streakDays; }
+    public void setStreakDays(Integer streakDays) { this.streakDays = streakDays; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}
