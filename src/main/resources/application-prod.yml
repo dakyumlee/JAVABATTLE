@@ -1,22 +1,19 @@
 spring:
   datasource:
-    url: ${DATABASE_URL}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:oracle:thin:@adb.ap-chuncheon-1.oraclecloud.com:1522/gba75c561a7ea5d_javabattlearena_medium.adb.oraclecloud.com
+    username: ADMIN
+    password: ${ORACLE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
     
   jpa:
     hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.OracleDialect
+    show-sql: false
         
 server:
   port: ${PORT:8080}
   
-logging:
-  level:
-    org.springframework.security: DEBUG
-    com.javabattle: DEBUG
-    
 jwt:
   secret: ${JWT_SECRET:fallback-secret-key}
   expiration: 86400000
