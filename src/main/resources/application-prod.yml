@@ -5,24 +5,18 @@ spring:
     
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
+    show-sql: true
         
-  profiles:
-    active: prod
-    
 server:
   port: ${PORT:8080}
   
 logging:
   level:
-    org.springframework.security: INFO
-    com.javabattle: INFO
+    org.springframework.security: DEBUG
+    com.javabattle: DEBUG
     
 jwt:
-  secret: ${JWT_SECRET:java-battle-arena-super-secret-jwt-key-for-production-must-be-very-long-and-secure}
+  secret: ${JWT_SECRET:fallback-secret-key}
   expiration: 86400000
