@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:oracle:thin:@adb.ap-chuncheon-1.oraclecloud.com:1522/gba75c561a7ea5d_javabattlearena_medium.adb.oraclecloud.com
+    url: jdbc:oracle:thin:@adb.ap-chuncheon-1.oraclecloud.com:1522:javabattlearena
     username: ADMIN
     password: ${ORACLE_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
