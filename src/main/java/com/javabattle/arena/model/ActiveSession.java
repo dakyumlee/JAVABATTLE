@@ -39,7 +39,7 @@ public class ActiveSession {
     private LocalDateTime startTime;
 
     @Column(name = "CODE_LENGTH")
-    private Integer codeLength = 0;
+    private Long codeLength = 0;
 
     public ActiveSession() {
         this.startTime = LocalDateTime.now();
@@ -82,6 +82,6 @@ public class ActiveSession {
     public LocalDateTime getStartTime() { return startTime; }
     public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public Integer getCodeLength() { return codeLength; }
-    public void setCodeLength(Integer codeLength) { this.codeLength = codeLength; }
+    public Long getCodeLength() { return codeLength; }
+    public void setCodeLength(Long codeLength) { this.codeLength = codeLength; }
 }
