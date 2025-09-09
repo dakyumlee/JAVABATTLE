@@ -1,14 +1,25 @@
 spring:
+  profiles:
+    active: prod
   datasource:
-    driver-class-name: org.postgresql.Driver
+    url: ${DATABASE_URL:jdbc:oracle:thin:@localhost:1521:XE}
+    username: ${DB_USERNAME:javabattle}
+    password: ${DB_PASSWORD:javabattle123}
+    driver-class-name: ${DB_DRIVER:oracle.jdbc.OracleDriver}
   
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: ${DB_PLATFORM:org.hibernate.dialect.Oracle12cDialect}
     hibernate:
-      ddl-auto: validate  # validate → update로 변경
+      ddl-auto: update  # validate → update로 변경
     show-sql: false
 
-logging:
-  level:
-    com.javabattle.arena: INFO
-    org.springframework.web: INFO
+server:
+  port: ${PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:defaultsecretkey}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+anthropic:
+  api:
+    key: ${ANTHROPIC_API_KEY:your-default-key}
