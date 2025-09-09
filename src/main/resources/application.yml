@@ -1,6 +1,5 @@
 spring:
   profiles:
-    active: prod
   datasource:
     url: ${DATABASE_URL:jdbc:oracle:thin:@localhost:1521:XE}
     username: ${DB_USERNAME:javabattle}
