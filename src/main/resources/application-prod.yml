@@ -17,4 +17,3 @@ server:
 jwt:
   secret: ${JWT_SECRET:fallback-secret-key}
   expiration: 86400000
-
