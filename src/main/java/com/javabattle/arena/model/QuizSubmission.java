@@ -4,70 +4,69 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "QUIZ_SUBMISSIONS")
+@Table(name = "quiz_submissions")
 public class QuizSubmission {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(name = "USER_ID", nullable = false)
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
-    
-    @Column(name = "QUIZ_TITLE")
+
+    @Column(name = "quiz_title")
     private String quizTitle;
-    
-    @Column(columnDefinition = "TEXT")
-    @Column(name = "QUESTION")
+
+    @Column(name = "question", columnDefinition = "TEXT")
     private String question;
-    
-    @Column(name = "USER_ANSWER", nullable = false)
+
+    @Column(name = "user_answer", nullable = false)
     private Integer userAnswer;
-    
-    @Column(name = "CORRECT_ANSWER", nullable = false)
+
+    @Column(name = "correct_answer", nullable = false)
     private Integer correctAnswer;
-    
-    @Column(name = "IS_CORRECT", nullable = false)
-    private Integer isCorrect;
-    
-    @Column(name = "SUBMITTED_AT", nullable = false)
+
+    @Column(name = "is_correct", nullable = false)
+    private Boolean isCorrect;
+
+    @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt;
-    
+
     public QuizSubmission() {
         this.submittedAt = LocalDateTime.now();
     }
-    
+
     public QuizSubmission(Long userId, String quizTitle, String question, Integer userAnswer, Integer correctAnswer) {
         this.userId = userId;
         this.quizTitle = quizTitle;
         this.question = question;
         this.userAnswer = userAnswer;
         this.correctAnswer = correctAnswer;
-        this.isCorrect = userAnswer.equals(correctAnswer) ? 1 : 0;
+        this.isCorrect = userAnswer.equals(correctAnswer);
         this.submittedAt = LocalDateTime.now();
     }
-    
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    
+
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
-    
+
     public String getQuizTitle() { return quizTitle; }
     public void setQuizTitle(String quizTitle) { this.quizTitle = quizTitle; }
-    
+
     public String getQuestion() { return question; }
     public void setQuestion(String question) { this.question = question; }
-    
+
     public Integer getUserAnswer() { return userAnswer; }
     public void setUserAnswer(Integer userAnswer) { this.userAnswer = userAnswer; }
-    
+
     public Integer getCorrectAnswer() { return correctAnswer; }
     public void setCorrectAnswer(Integer correctAnswer) { this.correctAnswer = correctAnswer; }
-    
-    public Integer getIsCorrect() { return isCorrect; }
-    public void setIsCorrect(Integer isCorrect) { this.isCorrect = isCorrect; }
-    
+
+    public Boolean getIsCorrect() { return isCorrect; }
+    public void setIsCorrect(Boolean isCorrect) { this.isCorrect = isCorrect; }
+
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
 }
