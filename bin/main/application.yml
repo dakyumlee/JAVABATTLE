@@ -1,23 +1,37 @@
 spring:
   datasource:
-    url: jdbc:oracle:thin:@localhost:1521:XE
-    username: javabattle
-    password: javabattle123
+    url: jdbc:oracle:thin:@javabattlearena_medium?TNS_ADMIN=classpath:wallet
+    username: ADMIN
+    password: ${ORACLE_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop  # 처음 실행시 테이블 생성, 이후 update로 변경
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.OracleDialect
         format_sql: true
+        # Oracle 특화 설정
+        globally_quoted_identifiers: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
   thymeleaf:
-    cache: false
+    cache: true  # 운영환경에서는 캐시 활성화
 
 server:
-  port: 8080
+  port: ${PORT:8080}  # Heroku에서 동적 포트 할당
 
 jwt:
-  secret: javabattlearenasecretkeyforjwttoken2024verylongkeyforhs512algorithmsecurityrequirements
+  secret: ${JWT_SECRET:javabattlearenasecretkeyforjwttoken2024verylongkeyforhs512algorithmsecurityrequirements}
   expiration: 86400000
+
+# 로깅 설정 (디버깅용)
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    oracle.jdbc: DEBUG
+    com.javabattle.arena: DEBUG
