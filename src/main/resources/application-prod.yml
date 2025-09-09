@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:oracle:thin:@javabattlearena_medium?TNS_ADMIN=classpath:wallet
+    url: jdbc:oracle:thin:@adb.ap-chuncheon-1.oraclecloud.com:1522/gba75c561a7ea5d_javabattlearena_medium.adb.oraclecloud.com
     username: ADMIN
     password: ${ORACLE_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
@@ -17,3 +17,4 @@ server:
 jwt:
   secret: ${JWT_SECRET:fallback-secret-key}
   expiration: 86400000
+
