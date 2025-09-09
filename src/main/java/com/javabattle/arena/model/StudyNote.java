@@ -7,79 +7,79 @@ import java.time.LocalDateTime;
 @Table(name = "STUDY_NOTES")
 public class StudyNote {
 
-    @Id
-    @Column(name = "NOTE_ID")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long noteId;
+@Id
+@Column(name = "NOTE_ID")
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long noteId;
 
-    @Column(name = "USER_ID", nullable = false)
-    private Long userId;
+@Column(name = "USER_ID", nullable = false)
+private Long userId;
 
-    @Column(name = "TITLE", nullable = false, length = 200)
-    private String title;
+@Column(name = "TITLE", nullable = false, length = 200)
+private String title;
 
-    @Column(name = "CONTENT", nullable = false, columnDefinition = "CLOB")
-    private String content;
+@Column(name = "CONTENT", nullable = false, columnDefinition = "TEXT")
+private String content;
 
-    @Column(name = "TAGS", length = 500)
-    private String tags;
+@Column(name = "TAGS", length = 500)
+private String tags;
 
-    @Column(name = "CREATED_AT")
-    private LocalDateTime createdAt;
+@Column(name = "CREATED_AT")
+private LocalDateTime createdAt;
 
-    @Column(name = "CATEGORY", length = 50)
-    private String category;
-    
-    @Column(name = "DIFFICULTY_LEVEL")
-    private Integer difficultyLevel;
-    
-    @Column(name = "IS_FAVORITE")
-    private Boolean isFavorite = false;
+@Column(name = "CATEGORY", length = 50)
+private String category;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+@Column(name = "DIFFICULTY_LEVEL")
+private Integer difficultyLevel;
 
-    public StudyNote() {}
+@Column(name = "IS_FAVORITE")
+private Boolean isFavorite = false;
 
-    public StudyNote(Long userId, String title, String content, String category) {
-        this.userId = userId;
-        this.title = title;
-        this.content = content;
-        this.category = category;
-    }
+@PrePersist
+protected void onCreate() {
+createdAt = LocalDateTime.now();
+}
 
-    public Long getNoteId() { return noteId; }
-    public void setNoteId(Long noteId) { this.noteId = noteId; }
+public StudyNote() {}
 
-    public Long getId() { return noteId; }
-    public void setId(Long id) { this.noteId = id; }
+public StudyNote(Long userId, String title, String content, String category) {
+this.userId = userId;
+this.title = title;
+this.content = content;
+this.category = category;
+}
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+public Long getNoteId() { return noteId; }
+public void setNoteId(Long noteId) { this.noteId = noteId; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+public Long getId() { return noteId; }
+public void setId(Long id) { this.noteId = id; }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+public Long getUserId() { return userId; }
+public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+public String getTitle() { return title; }
+public void setTitle(String title) { this.title = title; }
 
-    public String getTags() { return tags; }
-    public void setTags(String tags) { this.tags = tags; }
+public String getContent() { return content; }
+public void setContent(String content) { this.content = content; }
 
-    public Integer getDifficultyLevel() { return difficultyLevel; }
-    public void setDifficultyLevel(Integer difficultyLevel) { this.difficultyLevel = difficultyLevel; }
+public String getCategory() { return category; }
+public void setCategory(String category) { this.category = category; }
 
-    public Boolean getIsFavorite() { return isFavorite; }
-    public void setIsFavorite(Boolean isFavorite) { this.isFavorite = isFavorite; }
+public String getTags() { return tags; }
+public void setTags(String tags) { this.tags = tags; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+public Integer getDifficultyLevel() { return difficultyLevel; }
+public void setDifficultyLevel(Integer difficultyLevel) { this.difficultyLevel = difficultyLevel; }
 
-    public LocalDateTime getUpdatedAt() { return createdAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) {}
+public Boolean getIsFavorite() { return isFavorite; }
+public void setIsFavorite(Boolean isFavorite) { this.isFavorite = isFavorite; }
+
+public LocalDateTime getCreatedAt() { return createdAt; }
+public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+public LocalDateTime getUpdatedAt() { return createdAt; }
+public void setUpdatedAt(LocalDateTime updatedAt) {}
 }
