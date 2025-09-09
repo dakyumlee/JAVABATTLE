@@ -9,7 +9,7 @@ public class StudyNote {
 
     @Id
     @Column(name = "NOTE_ID")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "study_note_seq")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @SequenceGenerator(name = "study_note_seq", sequenceName = "STUDY_NOTE_SEQ", allocationSize = 1)
     private Long noteId;
 

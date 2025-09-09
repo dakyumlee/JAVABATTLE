@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "LEARNING_STATISTICS")
 public class LearningStatistics {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "learning_stats_seq")
-    @SequenceGenerator(name = "learning_stats_seq", sequenceName = "LEARNING_STATS_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @Column(name = "user_id", nullable = false)

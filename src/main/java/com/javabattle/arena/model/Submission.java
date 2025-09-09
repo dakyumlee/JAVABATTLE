@@ -8,8 +8,7 @@ import java.time.LocalDateTime;
 public class Submission {
    
    @Id
-   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "submissions_seq")
-   @SequenceGenerator(name = "submissions_seq", sequenceName = "SUBMISSIONS_SEQ", allocationSize = 1)
+   @GeneratedValue(strategy = GenerationType.IDENTITY)
    @Column(name = "SUBMISSION_ID")
    private Long submissionId;
    

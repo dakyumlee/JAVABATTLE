@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "QUICK_PROBLEMS")
 public class QuickProblem {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "quick_problem_seq")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @SequenceGenerator(name = "quick_problem_seq", sequenceName = "QUICK_PROBLEM_SEQ", allocationSize = 1)
     private Long id;
     

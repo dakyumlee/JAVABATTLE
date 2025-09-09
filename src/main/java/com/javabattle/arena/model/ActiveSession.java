@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 @Table(name = "ACTIVE_SESSIONS")
 public class ActiveSession {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "session_seq")
-    @SequenceGenerator(name = "session_seq", sequenceName = "SESSION_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "USER_ID", nullable = false)
