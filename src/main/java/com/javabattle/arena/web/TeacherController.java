@@ -15,14 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @RestController
 public class TeacherController {
@@ -216,14 +214,6 @@ public class TeacherController {
             ProblemSubmission submission = new ProblemSubmission(userId, problemTitle, answer);
             problemSubmissionRepository.save(submission);
             
-            System.out.println("=== 답안 제출 수신 및 저장 ===");
-            System.out.println("학생 ID: " + userId);
-            System.out.println("문제 제목: " + problemTitle);
-            System.out.println("답안 내용: " + answer);
-            System.out.println("제출 시간: " + submission.getSubmittedAt());
-            System.out.println("DB 저장 ID: " + submission.getId());
-            System.out.println("========================");
-            
             Map<String, Object> answerNotification = new HashMap<>();
             answerNotification.put("type", "ANSWER_SUBMITTED");
             answerNotification.put("userId", userId);
@@ -278,15 +268,6 @@ public class TeacherController {
             
             QuizSubmission submission = new QuizSubmission(userId, quizTitle, question, userAnswer, correctAnswer);
             quizSubmissionRepository.save(submission);
-            
-            System.out.println("=== 퀴즈 답안 제출 수신 및 저장 ===");
-            System.out.println("학생 ID: " + userId);
-            System.out.println("퀴즈 제목: " + quizTitle);
-            System.out.println("학생 답안: " + (userAnswer + 1) + "번");
-            System.out.println("정답: " + (correctAnswer + 1) + "번");
-            System.out.println("정답 여부: " + submission.getIsCorrect());
-            System.out.println("DB 저장 ID: " + submission.getId());
-            System.out.println("========================");
             
             Map<String, Object> quizNotification = new HashMap<>();
             quizNotification.put("type", "QUIZ_SUBMITTED");
@@ -408,12 +389,6 @@ public class TeacherController {
             submission.setFeedback(feedback);
             problemSubmissionRepository.save(submission);
             
-            System.out.println("=== 점수 저장 완료 ===");
-            System.out.println("제출물 ID: " + id);
-            System.out.println("점수: " + score);
-            System.out.println("피드백: " + feedback);
-            System.out.println("================");
-            
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "점수가 저장되었습니다.");
@@ -429,8 +404,14 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/notes")
-    public ResponseEntity<Map<String, Object>> createNote(@RequestBody TeacherNote note) {
+    public ResponseEntity<Map<String, Object>> createNote(@RequestBody Map<String, Object> noteData) {
         try {
+            TeacherNote note = new TeacherNote();
+            note.setTitle((String) noteData.get("title"));
+            note.setContent((String) noteData.get("content"));
+            note.setCategory((String) noteData.get("category"));
+            note.setTeacherId(1L);
+            note.setIsPinned(false);
             note.setCreatedAt(LocalDateTime.now());
             note.setUpdatedAt(LocalDateTime.now());
             

@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +27,7 @@ public class StudentController {
     @GetMapping("/submissions")
     public ResponseEntity<Map<String, Object>> getMySubmissions(@RequestParam Long userId) {
         try {
-            System.out.println("=== 답안 조회 요청 ===");
-            System.out.println("요청 사용자 ID: " + userId);
-            
             List<ProblemSubmission> submissions = problemSubmissionRepository.findByUserIdOrderBySubmittedAtDesc(userId);
-            System.out.println("찾은 답안 수: " + submissions.size());
             
             List<Map<String, Object>> submissionMaps = submissions.stream().map(submission -> {
                 Map<String, Object> data = new HashMap<>();
@@ -49,14 +44,9 @@ public class StudentController {
             response.put("success", true);
             response.put("submissions", submissionMaps);
             response.put("totalCount", submissions.size());
-            
-            System.out.println("응답 데이터 크기: " + submissionMaps.size());
-            System.out.println("==================");
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("답안 조회 오류: " + e.getMessage());
-            e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "답안 조회에 실패했습니다: " + e.getMessage());
@@ -95,7 +85,6 @@ public class StudentController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "퀴즈 답안 조회에 실패했습니다: " + e.getMessage());
