@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "problem_submissions")
 public class ProblemSubmission {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,13 +13,13 @@ public class ProblemSubmission {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "problem_title")
+    @Column(name = "problem_title", length = 500)
     private String problemTitle;
 
     @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
 
-    @Column(name = "submitted_at", nullable = false, insertable = true, updatable = false)
+    @Column(name = "submitted_at")
     private LocalDateTime submittedAt;
 
     @Column(name = "score")
@@ -28,13 +27,6 @@ public class ProblemSubmission {
 
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
-
-    @PrePersist
-    protected void onCreate() {
-        if (submittedAt == null) {
-            submittedAt = LocalDateTime.now();
-        }
-    }
 
     public ProblemSubmission() {
         this.submittedAt = LocalDateTime.now();
@@ -47,24 +39,59 @@ public class ProblemSubmission {
         this.answer = answer;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getProblemTitle() { return problemTitle; }
-    public void setProblemTitle(String problemTitle) { this.problemTitle = problemTitle; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public String getAnswer() { return answer; }
-    public void setAnswer(String answer) { this.answer = answer; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public LocalDateTime getSubmittedAt() { return submittedAt; }
-    public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public String getProblemTitle() {
+        return problemTitle;
+    }
 
-    public Integer getScore() { return score; }
-    public void setScore(Integer score) { this.score = score; }
+    public void setProblemTitle(String problemTitle) {
+        this.problemTitle = problemTitle;
+    }
 
-    public String getFeedback() { return feedback; }
-    public void setFeedback(String feedback) { this.feedback = feedback; }
+    public String getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(String answer) {
+        this.answer = answer;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
+    }
+
+    public String getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
+    }
 }

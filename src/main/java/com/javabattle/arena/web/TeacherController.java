@@ -4,9 +4,11 @@ import com.javabattle.arena.model.ActiveSession;
 import com.javabattle.arena.model.ProblemSubmission;
 import com.javabattle.arena.model.QuizSubmission;
 import com.javabattle.arena.model.User;
+import com.javabattle.arena.model.TeacherNote;
 import com.javabattle.arena.repository.ProblemSubmissionRepository;
 import com.javabattle.arena.repository.QuizSubmissionRepository;
 import com.javabattle.arena.repository.UserRepository;
+import com.javabattle.arena.repository.TeacherNoteRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @RestController
 public class TeacherController {
@@ -38,6 +41,9 @@ public class TeacherController {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private TeacherNoteRepository teacherNoteRepository;
     
     @GetMapping("/api/teacher/active-students")
     public ResponseEntity<List<Map<String, Object>>> getActiveStudents() {
@@ -422,70 +428,62 @@ public class TeacherController {
         }
     }
     
-    @GetMapping("/api/teacher/submissions/{id}")
-    public ResponseEntity<Map<String, Object>> getSubmission(@PathVariable Long id) {
+    @PostMapping("/api/teacher/notes")
+    public ResponseEntity<Map<String, Object>> createNote(@RequestBody TeacherNote note) {
         try {
-            ProblemSubmission submission = problemSubmissionRepository.findById(id).orElse(null);
-            if (submission == null) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("success", false);
-                response.put("message", "제출물을 찾을 수 없습니다.");
-                return ResponseEntity.notFound().build();
-            }
+            note.setCreatedAt(LocalDateTime.now());
+            note.setUpdatedAt(LocalDateTime.now());
             
-            Map<String, Object> result = new HashMap<>();
-            result.put("id", submission.getId());
-            result.put("userId", submission.getUserId());
-            result.put("problemTitle", submission.getProblemTitle());
-            result.put("answer", submission.getAnswer());
-            result.put("submittedAt", submission.getSubmittedAt());
-            result.put("score", submission.getScore());
-            result.put("feedback", submission.getFeedback());
+            TeacherNote saved = teacherNoteRepository.save(note);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("submission", result);
+            response.put("note", saved);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "제출물 조회 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "노트 생성 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
     
-    @GetMapping("/api/teacher/statistics")
-    public ResponseEntity<Map<String, Object>> getStatistics() {
+    @GetMapping("/api/teacher/notes")
+    public ResponseEntity<Map<String, Object>> getNotes() {
         try {
-            long totalSubmissions = problemSubmissionRepository.count();
-            long gradedSubmissions = problemSubmissionRepository.countGradedSubmissions();
-            long ungradedSubmissions = problemSubmissionRepository.countUngradedSubmissions();
-            Double averageScore = problemSubmissionRepository.getAverageScore();
-            
-            long totalQuizSubmissions = quizSubmissionRepository.count();
-            long correctQuizAnswers = quizSubmissionRepository.countCorrectAnswers();
-            
-            Map<String, Object> stats = new HashMap<>();
-            stats.put("totalProblemSubmissions", totalSubmissions);
-            stats.put("gradedSubmissions", gradedSubmissions);
-            stats.put("ungradedSubmissions", ungradedSubmissions);
-            stats.put("averageScore", averageScore != null ? averageScore : 0.0);
-            stats.put("totalQuizSubmissions", totalQuizSubmissions);
-            stats.put("correctQuizAnswers", correctQuizAnswers);
-            stats.put("quizAccuracy", totalQuizSubmissions > 0 ? (double) correctQuizAnswers / totalQuizSubmissions * 100 : 0.0);
+            List<TeacherNote> notes = teacherNoteRepository.findAll();
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("statistics", stats);
+            response.put("notes", notes);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
-            response.put("message", "통계 조회 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("message", "노트 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @DeleteMapping("/api/teacher/notes/{id}")
+    public ResponseEntity<Map<String, Object>> deleteNote(@PathVariable Long id) {
+        try {
+            teacherNoteRepository.deleteById(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "노트가 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "노트 삭제 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }

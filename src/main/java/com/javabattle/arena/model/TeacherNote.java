@@ -10,20 +10,17 @@ public class TeacherNote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "teacher_id", nullable = false)
+    @Column(name = "teacher_id")
     private Long teacherId;
 
-    @Column(name = "title", nullable = false, length = 200)
+    @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(name = "category", length = 100)
+    private String category = "기타";
+
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
-
-    @Column(name = "category", length = 50)
-    private String category;
-
-    @Column(name = "is_pinned")
-    private Boolean isPinned = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -31,47 +28,83 @@ public class TeacherNote {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+    @Column(name = "is_pinned")
+    private Boolean isPinned = false;
+
+    public TeacherNote() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public TeacherNote() {}
-
-    public TeacherNote(Long teacherId, String title, String content, String category) {
+    public TeacherNote(Long teacherId, String title, String category, String content) {
+        this();
         this.teacherId = teacherId;
         this.title = title;
+        this.category = category;
         this.content = content;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getTeacherId() {
+        return teacherId;
+    }
+
+    public void setTeacherId(Long teacherId) {
+        this.teacherId = teacherId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
         this.category = category;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getContent() {
+        return content;
+    }
 
-    public Long getTeacherId() { return teacherId; }
-    public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 
-    public Boolean getIsPinned() { return isPinned; }
-    public void setIsPinned(Boolean isPinned) { this.isPinned = isPinned; }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Boolean getIsPinned() {
+        return isPinned;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setIsPinned(Boolean isPinned) {
+        this.isPinned = isPinned;
+    }
 }

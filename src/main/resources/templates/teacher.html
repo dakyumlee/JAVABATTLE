@@ -1006,6 +1006,15 @@
     var currentSubmissionTab = 'problems';
     var userNamesCache = {};
 
+    function getAuthToken() {
+        return localStorage.getItem('token') || 
+               localStorage.getItem('jwtToken') || 
+               localStorage.getItem('authToken') || 
+               sessionStorage.getItem('token') ||
+               sessionStorage.getItem('jwtToken') ||
+               sessionStorage.getItem('authToken');
+    }
+
     function connect() {
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
@@ -1060,13 +1069,39 @@
     }
 
     function loadUserNames() {
-        fetch('/api/users/all')
-            .then(function(response) { return response.json(); })
+        const token = getAuthToken();
+        if (!token) {
+            console.log('토큰이 없어서 사용자 목록을 로드할 수 없습니다');
+            return;
+        }
+
+        fetch('/api/users/all', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(function(response) { 
+                console.log('사용자 목록 API 응답:', response.status);
+                if (!response.ok) {
+                    throw new Error('사용자 목록 조회 실패: ' + response.status);
+                }
+                return response.json(); 
+            })
             .then(function(data) {
-                if (data.success) {
+                console.log('받은 사용자 데이터:', data);
+                if (data.success && data.users) {
                     data.users.forEach(function(user) {
-                        userNamesCache[user.id] = user.nickname || user.email;
+                        userNamesCache[user.id] = user.nickname || user.email || `사용자${user.id}`;
                     });
+                    console.log('사용자 캐시 업데이트:', userNamesCache);
+                    renderStudents();
+                } else if (Array.isArray(data)) {
+                    data.forEach(function(user) {
+                        userNamesCache[user.id] = user.nickname || user.email || `사용자${user.id}`;
+                    });
+                    console.log('사용자 캐시 업데이트:', userNamesCache);
+                    renderStudents();
                 }
             })
             .catch(function(error) {
@@ -1075,7 +1110,11 @@
     }
 
     function getStudentName(userId) {
-        return userNamesCache[userId] || ('사용자 ' + userId);
+        const cachedName = userNamesCache[userId];
+        if (cachedName) {
+            return cachedName;
+        }
+        return `학생${userId}`;
     }
 
     function showAnswerNotification(data) {
@@ -1144,7 +1183,15 @@
     }
 
     function updateSubmissionsCount() {
-        fetch('/api/teacher/submissions')
+        const token = getAuthToken();
+        if (!token) return;
+
+        fetch('/api/teacher/submissions', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -1173,7 +1220,7 @@
         if (existingIndex >= 0) {
             studentsData[existingIndex] = {
                 id: studentsData[existingIndex].id,
-                nickname: studentsData[existingIndex].nickname,
+                nickname: userNamesCache[activity.userId] || studentsData[existingIndex].nickname || getStudentName(activity.userId),
                 currentPage: activity.page,
                 isCoding: activity.isCoding,
                 codeLength: activity.codeLength,
@@ -1182,7 +1229,7 @@
         } else {
             studentsData.push({
                 id: activity.userId,
-                nickname: getStudentName(activity.userId),
+                nickname: userNamesCache[activity.userId] || getStudentName(activity.userId),
                 currentPage: activity.page,
                 isCoding: activity.isCoding,
                 codeLength: activity.codeLength,
@@ -1201,7 +1248,7 @@
     }
 
     function checkTeacherAuth() {
-        var token = localStorage.getItem('jwtToken');
+        var token = getAuthToken();
         if (!token) {
             document.getElementById('auth-warning').style.display = 'block';
             return false;
@@ -1210,17 +1257,32 @@
     }
 
     function refreshData() {
-        fetch('/api/teacher/active-students')
-            .then(function(response) { return response.json(); })
+        const token = getAuthToken();
+        if (!token) {
+            console.log('토큰이 없어서 데이터를 새로고침할 수 없습니다');
+            return;
+        }
+
+        fetch('/api/teacher/active-students', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(function(response) { 
+                console.log('활성 학생 API 응답:', response.status);
+                return response.json(); 
+            })
             .then(function(data) {
+                console.log('받은 학생 데이터:', data);
                 studentsData = data.map(function(session) {
                     return {
                         id: session.userId,
-                        nickname: getStudentName(session.userId),
-                        currentPage: '/study',
-                        isCoding: false,
-                        codeLength: 0,
-                        lastActivity: session.lastActivity
+                        nickname: userNamesCache[session.userId] || getStudentName(session.userId),
+                        currentPage: session.currentPage || '/study',
+                        isCoding: session.isCoding || false,
+                        codeLength: session.codeLength || 0,
+                        lastActivity: new Date(session.lastActivity || session.updatedAt || Date.now())
                     };
                 });
                 updateStats();
@@ -1228,14 +1290,16 @@
                 updateSubmissionsCount();
             })
             .catch(function(error) {
-                console.log('API 연결 대기 중...');
+                console.log('API 연결 대기 중...', error);
             });
     }
 
     function updateStats() {
         var totalStudents = studentsData.length;
+        var now = new Date();
         var activeStudents = studentsData.filter(function(s) { 
-        	return new Date() - new Date(s.lastActivity) < 86400000;
+            var lastActivity = new Date(s.lastActivity);
+            return (now - lastActivity) < 300000;
         }).length;
         var codingStudents = studentsData.filter(function(s) { return s.isCoding; }).length;
         var avgCodeLength = totalStudents > 0 ? 
@@ -1402,7 +1466,13 @@
         document.getElementById('problemSubmissionsContent').innerHTML = 
             '<div style="text-align: center; padding: 2rem; color: #6c757d;">답안을 불러오는 중...</div>';
         
-        fetch('/api/teacher/submissions')
+        const token = getAuthToken();
+        fetch('/api/teacher/submissions', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -1424,7 +1494,13 @@
         document.getElementById('quizSubmissionsContent').innerHTML = 
             '<div style="text-align: center; padding: 2rem; color: #6c757d;">퀴즈 답안을 불러오는 중...</div>';
         
-        fetch('/api/teacher/quiz-submissions')
+        const token = getAuthToken();
+        fetch('/api/teacher/quiz-submissions', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
             .then(function(response) { return response.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -1556,9 +1632,13 @@
             return;
         }
         
+        const token = getAuthToken();
         fetch('/api/teacher/submissions/' + currentSubmissionId + '/score', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 score: parseInt(score),
                 feedback: feedback
@@ -1580,12 +1660,17 @@
     }
 
     function loadNotes() {
+        const token = getAuthToken();
         fetch('/api/teacher/notes', {
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         })
-        .then(function(response) { return response.json(); })
+        .then(function(response) { 
+            console.log('노트 API 응답:', response.status);
+            return response.json(); 
+        })
         .then(function(data) {
             if (data.success) {
                 notesData = data.notes || [];
@@ -1697,15 +1782,19 @@
             '/api/teacher/notes';
         var method = currentNoteId ? 'PUT' : 'POST';
         
+        const token = getAuthToken();
         fetch(url, {
             method: method,
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(noteData)
         })
-        .then(function(response) { return response.json(); })
+        .then(function(response) { 
+            console.log('노트 저장 API 응답:', response.status);
+            return response.json(); 
+        })
         .then(function(data) {
             if (data.success) {
                 alert(currentNoteId ? '메모가 수정되었습니다!' : '메모가 저장되었습니다!');
@@ -1742,10 +1831,12 @@
     function deleteNote(noteId) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
         
+        const token = getAuthToken();
         fetch('/api/teacher/notes/' + noteId, {
             method: 'DELETE',
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         })
         .then(function(response) { return response.json(); })
@@ -1823,9 +1914,13 @@
             return;
         }
 
+        const token = getAuthToken();
         fetch('/api/teacher/quick-quiz', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({
                 title: title,
                 question: question,
@@ -1854,9 +1949,13 @@
             return;
         }
 
+        const token = getAuthToken();
         fetch('/api/teacher/send-hint', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ studentId: currentStudentId, message: message })
         })
         .then(function() {
@@ -1875,9 +1974,13 @@
             return;
         }
 
+        const token = getAuthToken();
         fetch('/api/teacher/global-hint', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ message: message })
         })
         .then(function() {
@@ -1898,9 +2001,13 @@
             return;
         }
 
+        const token = getAuthToken();
         fetch('/api/teacher/create-problem', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ title: title, description: description })
         })
         .then(function(response) { return response.json(); })
@@ -1948,8 +2055,7 @@
     connect();
     refreshData();
     setInterval(refreshData, 10000);
+    setInterval(loadUserNames, 30000);
     </script>
 </body>
 </html>
-            
-            

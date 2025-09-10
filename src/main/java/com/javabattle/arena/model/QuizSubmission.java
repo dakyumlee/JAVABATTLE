@@ -6,67 +6,106 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "quiz_submissions")
 public class QuizSubmission {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-   @Id
-   @GeneratedValue(strategy = GenerationType.IDENTITY)
-   private Long id;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-   @Column(name = "user_id", nullable = false)
-   private Long userId;
+    @Column(name = "quiz_title", length = 500)
+    private String quizTitle;
 
-   @Column(name = "quiz_title")
-   private String quizTitle;
+    @Column(name = "question", columnDefinition = "TEXT")
+    private String question;
 
-   @Column(name = "question", columnDefinition = "TEXT")
-   private String question;
+    @Column(name = "user_answer")
+    private Integer userAnswer;
 
-   @Column(name = "user_answer", nullable = false)
-   private Integer userAnswer;
+    @Column(name = "correct_answer")
+    private Integer correctAnswer;
 
-   @Column(name = "correct_answer", nullable = false)
-   private Integer correctAnswer;
+    @Column(name = "is_correct")
+    private Integer isCorrect;
 
-   @Column(name = "is_correct", nullable = false)
-   private Integer isCorrect;
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
 
-   @Column(name = "submitted_at", nullable = false)
-   private LocalDateTime submittedAt;
+    public QuizSubmission() {
+        this.submittedAt = LocalDateTime.now();
+    }
 
-   public QuizSubmission() {
-       this.submittedAt = LocalDateTime.now();
-   }
+    public QuizSubmission(Long userId, String quizTitle, String question, Integer userAnswer, Integer correctAnswer) {
+        this();
+        this.userId = userId;
+        this.quizTitle = quizTitle;
+        this.question = question;
+        this.userAnswer = userAnswer;
+        this.correctAnswer = correctAnswer;
+        this.isCorrect = userAnswer.equals(correctAnswer) ? 1 : 0;
+    }
 
-   public QuizSubmission(Long userId, String quizTitle, String question, Integer userAnswer, Integer correctAnswer) {
-       this.userId = userId;
-       this.quizTitle = quizTitle;
-       this.question = question;
-       this.userAnswer = userAnswer;
-       this.correctAnswer = correctAnswer;
-       this.isCorrect = userAnswer.equals(correctAnswer) ? 1 : 0;
-       this.submittedAt = LocalDateTime.now();
-   }
+    public Long getId() {
+        return id;
+    }
 
-   public Long getId() { return id; }
-   public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-   public Long getUserId() { return userId; }
-   public void setUserId(Long userId) { this.userId = userId; }
+    public Long getUserId() {
+        return userId;
+    }
 
-   public String getQuizTitle() { return quizTitle; }
-   public void setQuizTitle(String quizTitle) { this.quizTitle = quizTitle; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-   public String getQuestion() { return question; }
-   public void setQuestion(String question) { this.question = question; }
+    public String getQuizTitle() {
+        return quizTitle;
+    }
 
-   public Integer getUserAnswer() { return userAnswer; }
-   public void setUserAnswer(Integer userAnswer) { this.userAnswer = userAnswer; }
+    public void setQuizTitle(String quizTitle) {
+        this.quizTitle = quizTitle;
+    }
 
-   public Integer getCorrectAnswer() { return correctAnswer; }
-   public void setCorrectAnswer(Integer correctAnswer) { this.correctAnswer = correctAnswer; }
+    public String getQuestion() {
+        return question;
+    }
 
-   public Integer getIsCorrect() { return isCorrect; }
-   public void setIsCorrect(Integer isCorrect) { this.isCorrect = isCorrect; }
+    public void setQuestion(String question) {
+        this.question = question;
+    }
 
-   public LocalDateTime getSubmittedAt() { return submittedAt; }
-   public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public Integer getUserAnswer() {
+        return userAnswer;
+    }
+
+    public void setUserAnswer(Integer userAnswer) {
+        this.userAnswer = userAnswer;
+    }
+
+    public Integer getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(Integer correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+
+    public Integer getIsCorrect() {
+        return isCorrect;
+    }
+
+    public void setIsCorrect(Integer isCorrect) {
+        this.isCorrect = isCorrect;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
 }

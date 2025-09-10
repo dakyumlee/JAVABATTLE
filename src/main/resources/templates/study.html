@@ -581,16 +581,32 @@
     let currentSubmissionTab = 'problems';
 
     function getAuthToken() {
-        return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || localStorage.getItem('jwtToken');
+        return localStorage.getItem('token') || 
+               localStorage.getItem('jwtToken') || 
+               localStorage.getItem('authToken') || 
+               sessionStorage.getItem('token') ||
+               sessionStorage.getItem('jwtToken') ||
+               sessionStorage.getItem('authToken');
     }
 
     function getCurrentUserId() {
+        const storedUserId = localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        if (storedUserId) {
+            return storedUserId;
+        }
+        
         const token = getAuthToken();
         if (!token) return null;
         
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
-            return payload.userId || payload.id || payload.sub;
+            const userId = payload.userId || payload.id || payload.sub;
+            
+            if (userId) {
+                localStorage.setItem('userId', userId);
+            }
+            
+            return userId;
         } catch (e) {
             console.error('토큰 파싱 오류:', e);
             return null;
@@ -624,29 +640,41 @@
             const token = getAuthToken();
             const userId = getCurrentUserId();
             
+            console.log('🔍 답안 조회 디버깅:');
+            console.log('토큰:', token ? '있음 (' + token.substring(0, 20) + '...)' : '없음');
+            console.log('사용자ID:', userId);
+            
             if (!token || !userId) {
-                console.log('토큰 또는 사용자 ID가 없습니다');
+                console.log('❌ 토큰 또는 사용자 ID가 없습니다');
                 renderMySubmissions();
                 return;
             }
 
-            const response = await fetch(`/api/student/submissions?userId=${userId}`, {
+            const url = `/api/student/submissions?userId=${userId}`;
+            console.log('📤 요청 URL:', url);
+
+            const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
+            console.log('📥 응답 상태:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('📥 받은 데이터:', data);
                 mySubmissions = data.submissions || [];
+                console.log('📊 답안 수:', mySubmissions.length);
                 renderMySubmissions();
             } else {
-                console.error('답안 조회 실패:', response.status);
+                const errorText = await response.text();
+                console.error('❌ 답안 조회 실패:', response.status, errorText);
                 renderMySubmissions();
             }
         } catch (error) {
-            console.error('답안 조회 오류:', error);
+            console.error('❌ 답안 조회 오류:', error);
             renderMySubmissions();
         }
     }
