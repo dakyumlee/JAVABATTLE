@@ -358,7 +358,7 @@ public class TeacherController {
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", submission.getId());
                 data.put("userId", submission.getUserId());
-                data.put("quiz Title", submission.getQuizTitle());
+                data.put("quizTitle", submission.getQuizTitle());
                 data.put("question", submission.getQuestion());
                 data.put("userAnswer", submission.getUserAnswer());
                 data.put("correctAnswer", submission.getCorrectAnswer());
