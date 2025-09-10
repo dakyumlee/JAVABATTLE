@@ -368,7 +368,6 @@
    		max-width: 400px;
    		transform: scale(0.9);
    		transition: transform 0.3s ease;
-   		position: relative;
    	}
 
    	.auth-modal.active .modal-content {
@@ -474,7 +473,7 @@
    			</div>
    			<div class="user-info" id="userInfo">
    				<div class="user-avatar" id="userAvatar">J</div>
-   				<span id="userNickname" class="user-name">사용자</span>
+   				<span id="userNickname">사용자</span>
    				<span class="role-badge" id="userRole">STUDENT</span>
    				<button class="btn btn-outline" onclick="logout()">로그아웃</button>
    			</div>
@@ -629,14 +628,11 @@
    		</p>
    	</div>
    </div>
-
 	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 	<script src="/js/student-activity.js"></script>
    <script>
    	let isLoginMode = true;
-   	let currentUser = null;
-   	let userId = null;
    	let authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
    	let currentUserRole = 'STUDENT';
    	let battleStompClient = null;
@@ -648,67 +644,13 @@
    	});
 
    	function requireAuth(callback) {
-   		if (!authToken || !userId) {
+   		if (!authToken) {
    			alert('로그인이 필요한 서비스입니다.');
    			openModal('login');
    			return false;
    		}
    		callback();
    		return true;
-   	}
-
-   	function openModal(mode) {
-   		const modal = document.getElementById('authModal');
-   		modal.classList.add('active');
-   		
-   		if (mode === 'register') {
-   			switchToRegister();
-   		} else {
-   			switchToLogin();
-   		}
-   	}
-
-   	function closeModal() {
-   		const modal = document.getElementById('authModal');
-   		modal.classList.remove('active');
-   		clearForm();
-   	}
-
-   	function switchMode() {
-   		if (isLoginMode) {
-   			switchToRegister();
-   		} else {
-   			switchToLogin();
-   		}
-   	}
-
-   	function switchToLogin() {
-   		isLoginMode = true;
-   		document.getElementById('modalTitle').textContent = '로그인';
-   		document.getElementById('modalSubtitle').textContent = '계정에 로그인하세요';
-   		document.getElementById('submitText').textContent = '로그인';
-   		document.getElementById('switchText').textContent = '계정이 없으신가요?';
-   		document.getElementById('switchLink').textContent = '회원가입';
-   		document.getElementById('nicknameGroup').style.display = 'none';
-   		document.getElementById('confirmPasswordGroup').style.display = 'none';
-   	}
-
-   	function switchToRegister() {
-   		isLoginMode = false;
-   		document.getElementById('modalTitle').textContent = '회원가입';
-   		document.getElementById('modalSubtitle').textContent = '새 계정을 만드세요';
-   		document.getElementById('submitText').textContent = '회원가입';
-   		document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
-   		document.getElementById('switchLink').textContent = '로그인';
-   		document.getElementById('nicknameGroup').style.display = 'block';
-   		document.getElementById('confirmPasswordGroup').style.display = 'block';
-   	}
-
-   	function clearForm() {
-   		document.getElementById('email').value = '';
-   		document.getElementById('password').value = '';
-   		document.getElementById('nickname').value = '';
-   		document.getElementById('confirmPassword').value = '';
    	}
 
    	function startSoloBattle() {
@@ -894,6 +836,60 @@
    		window.location.href = '/ranking';
    	}
 
+   	function openModal(mode) {
+   		const modal = document.getElementById('authModal');
+   		modal.classList.add('active');
+   		
+   		if (mode === 'register') {
+   			switchToRegister();
+   		} else {
+   			switchToLogin();
+   		}
+   	}
+
+   	function closeModal() {
+   		const modal = document.getElementById('authModal');
+   		modal.classList.remove('active');
+   		clearForm();
+   	}
+
+   	function switchMode() {
+   		if (isLoginMode) {
+   			switchToRegister();
+   		} else {
+   			switchToLogin();
+   		}
+   	}
+
+   	function switchToLogin() {
+   		isLoginMode = true;
+   		document.getElementById('modalTitle').textContent = '로그인';
+   		document.getElementById('modalSubtitle').textContent = '계정에 로그인하세요';
+   		document.getElementById('submitText').textContent = '로그인';
+   		document.getElementById('switchText').textContent = '계정이 없으신가요?';
+   		document.getElementById('switchLink').textContent = '회원가입';
+   		document.getElementById('nicknameGroup').style.display = 'none';
+   		document.getElementById('confirmPasswordGroup').style.display = 'none';
+   	}
+
+   	function switchToRegister() {
+   		isLoginMode = false;
+   		document.getElementById('modalTitle').textContent = '회원가입';
+   		document.getElementById('modalSubtitle').textContent = '새 계정을 만드세요';
+   		document.getElementById('submitText').textContent = '회원가입';
+   		document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
+   		document.getElementById('switchLink').textContent = '로그인';
+   		document.getElementById('nicknameGroup').style.display = 'block';
+   		document.getElementById('confirmPasswordGroup').style.display = 'block';
+   	}
+
+   	function clearForm() {
+   		document.getElementById('email').value = '';
+   		document.getElementById('password').value = '';
+   		document.getElementById('nickname').value = '';
+   		document.getElementById('confirmPassword').value = '';
+   	}
+
    	async function checkAuthStatus() {
    		try {
    			const response = await fetch('/api/auth/profile', {
@@ -905,33 +901,25 @@
 
    			if (response.ok) {
    				const user = await response.json();
-   				currentUser = user;
-   				userId = user.id;
-   				window.userId = userId;
-   				window.currentUser = currentUser;
    				showUserInfo(user);
    			} else {
    				localStorage.removeItem('authToken');
    				sessionStorage.removeItem('authToken');
    				authToken = null;
-   				userId = null;
-   				currentUser = null;
    			}
    		} catch (error) {
    			console.error('Auth check failed:', error);
    			localStorage.removeItem('authToken');
    			sessionStorage.removeItem('authToken');
    			authToken = null;
-   			userId = null;
-   			currentUser = null;
    		}
    	}
 
    	function showUserInfo(user) {
    		document.getElementById('authButtons').style.display = 'none';
    		document.getElementById('userInfo').classList.add('active');
-   		document.getElementById('userNickname').textContent = user.nickname || user.email;
-   		document.getElementById('userAvatar').textContent = (user.nickname || user.email).charAt(0).toUpperCase();
+   		document.getElementById('userNickname').textContent = user.nickname;
+   		document.getElementById('userAvatar').textContent = user.nickname.charAt(0).toUpperCase();
    		
    		currentUserRole = user.role || 'STUDENT';
    		const roleElement = document.getElementById('userRole');
@@ -980,13 +968,7 @@
    		localStorage.removeItem('authToken');
    		sessionStorage.removeItem('authToken');
    		authToken = null;
-   		userId = null;
-   		currentUser = null;
    		currentUserRole = 'STUDENT';
-   		
-   		delete window.userId;
-   		delete window.currentUser;
-   		
    		document.getElementById('authButtons').style.display = 'flex';
    		document.getElementById('userInfo').classList.remove('active');
    		document.getElementById('teacherSection').classList.remove('show');
@@ -1025,8 +1007,6 @@
    			{ email, password } : 
    			{ email, password, nickname };
    		
-   		console.log('요청 전송:', { url, body, isLoginMode });
-   		
    		try {
    			const response = await fetch(url, {
    				method: 'POST',
@@ -1037,37 +1017,20 @@
    			});
    			
    			const data = await response.json();
-   			console.log('서버 응답:', data);
    			
-   			if (response.ok && (data.status === 'success' || data.success)) {
+   			if (response.ok && data.status === 'success') {
    				if (isLoginMode && data.token) {
    					authToken = data.token;
    					localStorage.setItem('authToken', authToken);
-   					
-   					currentUser = {
-   						id: data.userId || data.id,
-   						email: data.email,
-   						nickname: data.nickname || data.email,
-   						role: data.role || 'STUDENT'
-   					};
-   					
-   					userId = currentUser.id;
-   					window.userId = userId;
-   					window.currentUser = currentUser;
-   					
-   					showUserInfo(currentUser);
+   					showUserInfo(data);
    					closeModal();
-   					alert(`환영합니다, ${currentUser.nickname}님!`);
-   					
-   					if (currentUser.role === 'TEACHER') {
-   						window.location.href = '/teacher';
-   					} else {
-   						window.location.href = '/student';
+   					alert(`환영합니다, ${data.nickname}님!`);
+   				} else {
+   					alert(data.message);
+   					if (!isLoginMode) {
+   						switchToLogin();
+   						clearForm();
    					}
-   				} else if (!isLoginMode) {
-   					alert(data.message || '회원가입이 완료되었습니다.');
-   					switchToLogin();
-   					clearForm();
    				}
    			} else {
    				alert(data.message || '오류가 발생했습니다.');
