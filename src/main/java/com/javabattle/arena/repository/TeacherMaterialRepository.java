@@ -31,4 +31,10 @@ public interface TeacherMaterialRepository extends JpaRepository<TeacherMaterial
     
     @Query("SELECT COUNT(t) FROM TeacherMaterial t WHERE t.isShared = true")
     long countSharedMaterials();
+    
+    @Query("SELECT t FROM TeacherMaterial t WHERE t.materialType = :fileType ORDER BY t.createdAt DESC")
+    List<TeacherMaterial> findByFileType(@Param("fileType") String fileType);
+    
+    @Query("SELECT t FROM TeacherMaterial t WHERE t.teacherId = :teacherId AND t.materialType = :fileType ORDER BY t.createdAt DESC")
+    List<TeacherMaterial> findByTeacherIdAndFileType(@Param("teacherId") Long teacherId, @Param("fileType") String fileType);
 }
