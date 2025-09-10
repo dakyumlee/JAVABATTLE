@@ -1710,8 +1710,7 @@
             var createdAt = new Date(note.createdAt);
             var timeAgo = getTimeAgo(createdAt);
             
-            return 
-                '<div class="note-item category-' + note.category + '" onclick="viewNote(' + note.id + ')">' +
+            return '<div class="note-item category-' + note.category + '" onclick="viewNote(' + note.id + ')">' +
                     '<div class="note-header">' +
                         '<h4 class="note-title">' + note.title + '</h4>' +
                         '<span class="note-category category-' + note.category + '">' + note.category + '</span>' +
