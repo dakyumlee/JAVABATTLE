@@ -368,6 +368,7 @@
    		max-width: 400px;
    		transform: scale(0.9);
    		transition: transform 0.3s ease;
+   		position: relative;
    	}
 
    	.auth-modal.active .modal-content {
@@ -656,6 +657,60 @@
    		return true;
    	}
 
+   	function openModal(mode) {
+   		const modal = document.getElementById('authModal');
+   		modal.classList.add('active');
+   		
+   		if (mode === 'register') {
+   			switchToRegister();
+   		} else {
+   			switchToLogin();
+   		}
+   	}
+
+   	function closeModal() {
+   		const modal = document.getElementById('authModal');
+   		modal.classList.remove('active');
+   		clearForm();
+   	}
+
+   	function switchMode() {
+   		if (isLoginMode) {
+   			switchToRegister();
+   		} else {
+   			switchToLogin();
+   		}
+   	}
+
+   	function switchToLogin() {
+   		isLoginMode = true;
+   		document.getElementById('modalTitle').textContent = '로그인';
+   		document.getElementById('modalSubtitle').textContent = '계정에 로그인하세요';
+   		document.getElementById('submitText').textContent = '로그인';
+   		document.getElementById('switchText').textContent = '계정이 없으신가요?';
+   		document.getElementById('switchLink').textContent = '회원가입';
+   		document.getElementById('nicknameGroup').style.display = 'none';
+   		document.getElementById('confirmPasswordGroup').style.display = 'none';
+   	}
+
+   	function switchToRegister() {
+   		isLoginMode = false;
+   		document.getElementById('modalTitle').textContent = '회원가입';
+   		document.getElementById('modalSubtitle').textContent = '새 계정을 만드세요';
+   		document.getElementById('submitText').textContent = '회원가입';
+   		document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
+   		document.getElementById('switchLink').textContent = '로그인';
+   		document.getElementById('nicknameGroup').style.display = 'block';
+   		document.getElementById('confirmPasswordGroup').style.display = 'block';
+   	}
+
+   	function clearForm() {
+   		document.getElementById('email').value = '';
+   		document.getElementById('password').value = '';
+   		document.getElementById('nickname').value = '';
+   		document.getElementById('confirmPassword').value = '';
+   	}
+
    	function startSoloBattle() {
    		requireAuth(() => {
    			window.location.href = '/battle?mode=solo';
@@ -837,60 +892,6 @@
 
    	function goToRanking() {
    		window.location.href = '/ranking';
-   	}
-
-   	function openModal(mode) {
-   		const modal = document.getElementById('authModal');
-   		modal.classList.add('active');
-   		
-   		if (mode === 'register') {
-   			switchToRegister();
-   		} else {
-   			switchToLogin();
-   		}
-   	}
-
-   	function closeModal() {
-   		const modal = document.getElementById('authModal');
-   		modal.classList.remove('active');
-   		clearForm();
-   	}
-
-   	function switchMode() {
-   		if (isLoginMode) {
-   			switchToRegister();
-   		} else {
-   			switchToLogin();
-   		}
-   	}
-
-   	function switchToLogin() {
-   		isLoginMode = true;
-   		document.getElementById('modalTitle').textContent = '로그인';
-   		document.getElementById('modalSubtitle').textContent = '계정에 로그인하세요';
-   		document.getElementById('submitText').textContent = '로그인';
-   		document.getElementById('switchText').textContent = '계정이 없으신가요?';
-   		document.getElementById('switchLink').textContent = '회원가입';
-   		document.getElementById('nicknameGroup').style.display = 'none';
-   		document.getElementById('confirmPasswordGroup').style.display = 'none';
-   	}
-
-   	function switchToRegister() {
-   		isLoginMode = false;
-   		document.getElementById('modalTitle').textContent = '회원가입';
-   		document.getElementById('modalSubtitle').textContent = '새 계정을 만드세요';
-   		document.getElementById('submitText').textContent = '회원가입';
-   		document.getElementById('switchText').textContent = '이미 계정이 있으신가요?';
-   		document.getElementById('switchLink').textContent = '로그인';
-   		document.getElementById('nicknameGroup').style.display = 'block';
-   		document.getElementById('confirmPasswordGroup').style.display = 'block';
-   	}
-
-   	function clearForm() {
-   		document.getElementById('email').value = '';
-   		document.getElementById('password').value = '';
-   		document.getElementById('nickname').value = '';
-   		document.getElementById('confirmPassword').value = '';
    	}
 
    	async function checkAuthStatus() {
