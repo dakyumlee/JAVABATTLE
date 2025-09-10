@@ -269,7 +269,94 @@ function showGlobalHint(message) {
 }
 
 function showAnnouncement(data) {
-    console.log('📝 문제 공지 표시:', data);
+    console.log('📝 알림 데이터:', data);
+    
+    // 메시지 타입에 따라 다른 처리
+    if (data.type === 'NEW_PROBLEM') {
+        // 문제 출제일 때만 답안 작성 모달
+        showProblemModal(data);
+    } else if (data.type === 'NEW_MATERIAL') {
+        // 자료 공유일 때는 알림만
+        showMaterialNotification(data);
+    } else {
+        // 기타 알림들 (기존 처리)
+        showGeneralNotification(data);
+    }
+}
+
+function showMaterialNotification(data) {
+    console.log('📁 자료 알림 표시:', data);
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #27ae60;
+        color: white;
+        padding: 20px 25px;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        z-index: 10000;
+        max-width: 450px;
+        font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        animation: slideIn 0.3s ease-out;
+        text-align: center;
+    `;
+    
+    notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 1.1rem;">📁 새로운 학습자료</div>
+        <div style="margin-bottom: 8px; font-size: 1rem; font-weight: 600;">${data.title || '자료'}</div>
+        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 12px;">${data.content || data.description || '새로운 학습자료가 공유되었습니다.'}</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">오늘의 학습 페이지에서 확인하세요</div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 6000);
+}
+
+function showGeneralNotification(data) {
+    console.log('📢 일반 알림 표시:', data);
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #3498db;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 400px;
+        font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px;">📢 알림</div>
+        <div>${data.title || data.message || '새로운 알림이 있습니다.'}</div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function showProblemModal(data) {
+    console.log('📝 문제 모달 표시:', data);
     
     const existingModal = document.getElementById('problemModal');
     if (existingModal) {
