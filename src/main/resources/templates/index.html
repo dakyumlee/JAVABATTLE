@@ -966,8 +966,15 @@
 
    	function logout() {
    		localStorage.removeItem('authToken');
+   		localStorage.removeItem('token');
+   		localStorage.removeItem('jwtToken');
+   		localStorage.removeItem('userId');
    		sessionStorage.removeItem('authToken');
+   		sessionStorage.removeItem('token');
+   		sessionStorage.removeItem('userId');
    		authToken = null;
+   		window.userId = null;
+   		window.currentUser = null;
    		currentUserRole = 'STUDENT';
    		document.getElementById('authButtons').style.display = 'flex';
    		document.getElementById('userInfo').classList.remove('active');
@@ -1021,7 +1028,18 @@
    			if (response.ok && data.status === 'success') {
    				if (isLoginMode && data.token) {
    					authToken = data.token;
+   					
    					localStorage.setItem('authToken', authToken);
+   					localStorage.setItem('token', authToken);
+   					localStorage.setItem('jwtToken', authToken);
+   					
+   					const userId = data.userId || data.id || data.user?.id;
+   					if (userId) {
+   						localStorage.setItem('userId', userId);
+   						window.userId = userId;
+   					}
+   					window.currentUser = data;
+   					
    					showUserInfo(data);
    					closeModal();
    					alert(`환영합니다, ${data.nickname}님!`);
