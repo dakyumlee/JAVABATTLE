@@ -5,15 +5,18 @@ import com.javabattle.arena.model.ProblemSubmission;
 import com.javabattle.arena.model.QuizSubmission;
 import com.javabattle.arena.model.User;
 import com.javabattle.arena.model.TeacherNote;
+import com.javabattle.arena.model.TeacherMaterial;
 import com.javabattle.arena.repository.ProblemSubmissionRepository;
 import com.javabattle.arena.repository.QuizSubmissionRepository;
 import com.javabattle.arena.repository.UserRepository;
 import com.javabattle.arena.repository.TeacherNoteRepository;
+import com.javabattle.arena.repository.TeacherMaterialRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +45,9 @@ public class TeacherController {
     
     @Autowired
     private TeacherNoteRepository teacherNoteRepository;
+    
+    @Autowired
+    private TeacherMaterialRepository teacherMaterialRepository;
     
     @GetMapping("/api/teacher/active-students")
     public ResponseEntity<List<Map<String, Object>>> getActiveStudents() {
@@ -492,6 +498,162 @@ public class TeacherController {
             response.put("success", false);
             response.put("message", "사용자 목록 조회 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/shared-materials")
+    public ResponseEntity<Map<String, Object>> shareTeacherMaterial(
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        
+        try {
+            TeacherMaterial material = new TeacherMaterial();
+            material.setTitle(title);
+            material.setContent(content);
+            material.setCreatedAt(LocalDateTime.now());
+            material.setTeacherId(1L);
+            material.setIsShared(true);
+            
+            if (file != null && !file.isEmpty()) {
+                material.setFileName(file.getOriginalFilename());
+                material.setFileSize(file.getSize());
+                material.setMaterialType(file.getContentType());
+            } else {
+                material.setMaterialType("text");
+            }
+
+            TeacherMaterial saved = teacherMaterialRepository.save(material);
+
+            Map<String, Object> materialData = new HashMap<>();
+            materialData.put("type", "NEW_MATERIAL");
+            materialData.put("title", saved.getTitle());
+            materialData.put("content", saved.getContent());
+            materialData.put("materialType", saved.getMaterialType());
+            materialData.put("from", "teacher");
+            materialData.put("timestamp", LocalDateTime.now());
+            materialData.put("materialId", saved.getId());
+
+            messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "자료가 성공적으로 공유되었습니다.");
+            response.put("materialId", saved.getId());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "자료 공유 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/api/teacher/materials/shared")
+    public ResponseEntity<Map<String, Object>> getSharedMaterials() {
+        try {
+            List<TeacherMaterial> materials = teacherMaterialRepository.findSharedMaterials();
+            
+            List<Map<String, Object>> materialList = materials.stream().map(material -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", material.getId());
+                data.put("title", material.getTitle());
+                data.put("content", material.getContent());
+                data.put("materialType", material.getMaterialType());
+                data.put("fileName", material.getFileName());
+                data.put("fileSize", material.getFileSize());
+                data.put("youtubeUrl", material.getYoutubeUrl());
+                data.put("createdAt", material.getCreatedAt());
+                return data;
+            }).collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("materials", materialList);
+            response.put("totalCount", materialList.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "공유 자료 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/materials/upload")
+    public ResponseEntity<Map<String, Object>> uploadMaterial(
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam("title") String title,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "tags", required = false) String tags) {
+        
+        try {
+            TeacherMaterial material = new TeacherMaterial();
+            material.setTitle(title);
+            material.setDescription(description);
+            material.setCategory(category);
+            material.setTags(tags);
+            material.setTeacherId(1L);
+            material.setIsShared(false);
+            material.setCreatedAt(LocalDateTime.now());
+            
+            if (file != null && !file.isEmpty()) {
+                material.setFileName(file.getOriginalFilename());
+                material.setFileSize(file.getSize());
+                material.setMaterialType(file.getContentType());
+            } else {
+                material.setMaterialType("text");
+            }
+
+            TeacherMaterial saved = teacherMaterialRepository.save(material);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "자료가 성공적으로 업로드되었습니다.");
+            response.put("materialId", saved.getId());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "자료 업로드 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/api/teacher/materials")
+    public ResponseEntity<List<Map<String, Object>>> getMaterials() {
+        try {
+            List<TeacherMaterial> materials = teacherMaterialRepository.findAllOrderByCreatedAtDesc();
+            
+            List<Map<String, Object>> materialList = materials.stream().map(material -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", material.getId());
+                data.put("title", material.getTitle());
+                data.put("description", material.getDescription());
+                data.put("category", material.getCategory());
+                data.put("tags", material.getTags());
+                data.put("materialType", material.getMaterialType());
+                data.put("fileName", material.getFileName());
+                data.put("fileSize", material.getFileSize());
+                data.put("youtubeUrl", material.getYoutubeUrl());
+                data.put("createdAt", material.getCreatedAt());
+                data.put("shared", material.getIsShared());
+                return data;
+            }).collect(Collectors.toList());
+            
+            return ResponseEntity.ok(materialList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 }
