@@ -4,15 +4,18 @@ import com.javabattle.arena.model.ActiveSession;
 import com.javabattle.arena.model.ProblemSubmission;
 import com.javabattle.arena.model.QuizSubmission;
 import com.javabattle.arena.model.User;
+import com.javabattle.arena.model.TeacherNote;
 import com.javabattle.arena.repository.ProblemSubmissionRepository;
 import com.javabattle.arena.repository.QuizSubmissionRepository;
 import com.javabattle.arena.repository.UserRepository;
+import com.javabattle.arena.repository.TeacherNoteRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,22 +41,27 @@ public class TeacherController {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private TeacherNoteRepository teacherNoteRepository;
+    
     @GetMapping("/api/teacher/active-students")
     public ResponseEntity<List<Map<String, Object>>> getActiveStudents() {
         try {
             List<ActiveSession> sessions = sessionService.getActiveSessions();
             
-            List<Map<String, Object>> result = sessions.stream().map(session -> {
-                Map<String, Object> studentData = new HashMap<>();
-                studentData.put("userId", session.getUserId());
-                studentData.put("sessionId", session.getSessionId());
-                studentData.put("currentPage", session.getCurrentPage());
-                studentData.put("lastActivity", session.getLastActivity());
-                studentData.put("isCoding", session.getIsCoding());
-                studentData.put("codeLength", session.getCurrentCode() != null ? session.getCurrentCode().length() : 0);
-                studentData.put("startTime", session.getStartTime());
-                return studentData;
-            }).collect(Collectors.toList());
+            List<Map<String, Object>> result = sessions.stream()
+                .filter(session -> session.getIsActive() != null && session.getIsActive())
+                .map(session -> {
+                    Map<String, Object> studentData = new HashMap<>();
+                    studentData.put("userId", session.getUserId());
+                    studentData.put("sessionId", session.getSessionId());
+                    studentData.put("currentPage", session.getCurrentPage());
+                    studentData.put("lastActivity", session.getLastActivity());
+                    studentData.put("isCoding", session.getIsCoding());
+                    studentData.put("codeLength", session.getCurrentCode() != null ? session.getCurrentCode().length() : 0);
+                    studentData.put("startTime", session.getStartTime());
+                    return studentData;
+                }).collect(Collectors.toList());
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -350,7 +358,7 @@ public class TeacherController {
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", submission.getId());
                 data.put("userId", submission.getUserId());
-                data.put("quizTitle", submission.getQuizTitle());
+                data.put("quiz Title", submission.getQuizTitle());
                 data.put("question", submission.getQuestion());
                 data.put("userAnswer", submission.getUserAnswer());
                 data.put("correctAnswer", submission.getCorrectAnswer());
@@ -509,6 +517,138 @@ public class TeacherController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "사용자 목록 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    @GetMapping("/api/teacher/notes")
+    public ResponseEntity<Map<String, Object>> getNotes() {
+        try {
+            Long teacherId = 1L;
+            
+            List<TeacherNote> notes = teacherNoteRepository.findAllByTeacherIdOrderByCreatedAtDesc(teacherId);
+            
+            List<Map<String, Object>> result = notes.stream().map(note -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", note.getId());
+                data.put("title", note.getTitle());
+                data.put("content", note.getContent());
+                data.put("category", note.getCategory());
+                data.put("isPinned", note.getIsPinned());
+                data.put("createdAt", note.getCreatedAt());
+                data.put("updatedAt", note.getUpdatedAt());
+                return data;
+            }).collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("notes", result);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "메모 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/notes")
+    public ResponseEntity<Map<String, Object>> createNote(@RequestBody Map<String, Object> request) {
+        try {
+            Long teacherId = 1L;
+            String title = (String) request.get("title");
+            String content = (String) request.get("content");
+            String category = (String) request.get("category");
+            
+            if (title == null || title.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "제목은 필수입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            TeacherNote note = new TeacherNote(teacherId, title, content, category);
+            teacherNoteRepository.save(note);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "메모가 저장되었습니다.");
+            response.put("noteId", note.getId());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "메모 저장 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/api/teacher/notes/{id}")
+    public ResponseEntity<Map<String, Object>> updateNote(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        try {
+            Long teacherId = 1L;
+            
+            TeacherNote note = teacherNoteRepository.findById(id).orElse(null);
+            if (note == null || !note.getTeacherId().equals(teacherId)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "메모를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            String title = (String) request.get("title");
+            String content = (String) request.get("content");
+            String category = (String) request.get("category");
+            
+            if (title != null) note.setTitle(title);
+            if (content != null) note.setContent(content);
+            if (category != null) note.setCategory(category);
+            
+            teacherNoteRepository.save(note);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "메모가 수정되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "메모 수정 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/api/teacher/notes/{id}")
+    public ResponseEntity<Map<String, Object>> deleteNote(@PathVariable Long id) {
+        try {
+            Long teacherId = 1L;
+            
+            TeacherNote note = teacherNoteRepository.findById(id).orElse(null);
+            if (note == null || !note.getTeacherId().equals(teacherId)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "메모를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            teacherNoteRepository.delete(note);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "메모가 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "메모 삭제 실패: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
