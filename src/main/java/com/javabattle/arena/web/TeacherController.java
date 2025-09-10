@@ -656,4 +656,111 @@ public class TeacherController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @DeleteMapping("/api/teacher/materials/{id}")
+    public ResponseEntity<Map<String, Object>> deleteMaterial(@PathVariable Long id) {
+        try {
+            if (!teacherMaterialRepository.existsById(id)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "자료를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            teacherMaterialRepository.deleteById(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "자료가 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "삭제 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/materials/{id}/share")
+    public ResponseEntity<Map<String, Object>> shareMaterial(@PathVariable Long id) {
+        try {
+            TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
+            if (material == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "자료를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            material.setIsShared(!material.getIsShared());
+            teacherMaterialRepository.save(material);
+
+            if (material.getIsShared()) {
+                Map<String, Object> materialData = new HashMap<>();
+                materialData.put("type", "NEW_MATERIAL");
+                materialData.put("title", material.getTitle());
+                materialData.put("content", material.getDescription());
+                materialData.put("materialType", material.getMaterialType());
+                materialData.put("from", "teacher");
+                materialData.put("timestamp", LocalDateTime.now());
+                materialData.put("materialId", material.getId());
+                messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("shared", material.getIsShared());
+            response.put("message", material.getIsShared() ? "학생들에게 공유되었습니다." : "공유가 중지되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "공유 설정 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/api/teacher/materials/{id}")
+    public ResponseEntity<Map<String, Object>> updateMaterial(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
+            if (material == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "자료를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            if (request.get("title") != null) {
+                material.setTitle(request.get("title"));
+            }
+            if (request.get("description") != null) {
+                material.setDescription(request.get("description"));
+            }
+            if (request.get("category") != null) {
+                material.setCategory(request.get("category"));
+            }
+            if (request.get("tags") != null) {
+                material.setTags(request.get("tags"));
+            }
+            
+            teacherMaterialRepository.save(material);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "자료가 수정되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "수정 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 }
