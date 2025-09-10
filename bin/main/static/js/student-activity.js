@@ -271,15 +271,19 @@ function showGlobalHint(message) {
 function showAnnouncement(data) {
     console.log('📝 알림 데이터:', data);
     
-    // 메시지 타입에 따라 다른 처리
     if (data.type === 'NEW_PROBLEM') {
-        // 문제 출제일 때만 답안 작성 모달
         showProblemModal(data);
     } else if (data.type === 'NEW_MATERIAL') {
-        // 자료 공유일 때는 알림만
         showMaterialNotification(data);
+        
+        // study.html 페이지인 경우 자료 목록 새로고침
+        if (window.location.pathname === '/study' && typeof window.loadSharedMaterials === 'function') {
+            setTimeout(() => {
+                console.log('🔄 study.html 자료 목록 새로고침');
+                window.loadSharedMaterials();
+            }, 1500);
+        }
     } else {
-        // 기타 알림들 (기존 처리)
         showGeneralNotification(data);
     }
 }
