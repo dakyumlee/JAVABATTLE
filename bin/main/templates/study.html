@@ -867,7 +867,7 @@
                 return;
             }
             
-            const response = await fetch('/api/teacher/shared-materials', {
+            const response = await fetch('/api/teacher/materials/shared', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -877,7 +877,10 @@
             console.log('응답 상태:', response.status);
             
             if (response.ok) {
-                sharedMaterials = await response.json();
+                const data = await response.json();
+                console.log('받은 데이터:', data);
+                
+                sharedMaterials = data.materials || data;
                 console.log('받은 자료 수:', sharedMaterials.length);
                 renderSharedMaterials();
             } else {
@@ -890,7 +893,7 @@
             renderSharedMaterials();
         }
     }
-
+    
     function renderSharedMaterials() {
         const grid = document.getElementById('sharedMaterialsGrid');
         const noMaterials = document.getElementById('noMaterials');
