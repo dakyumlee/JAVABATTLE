@@ -6,11 +6,13 @@ import com.javabattle.arena.model.QuizSubmission;
 import com.javabattle.arena.model.User;
 import com.javabattle.arena.model.TeacherNote;
 import com.javabattle.arena.model.TeacherMaterial;
+import com.javabattle.arena.model.Category;
 import com.javabattle.arena.repository.ProblemSubmissionRepository;
 import com.javabattle.arena.repository.QuizSubmissionRepository;
 import com.javabattle.arena.repository.UserRepository;
 import com.javabattle.arena.repository.TeacherNoteRepository;
 import com.javabattle.arena.repository.TeacherMaterialRepository;
+import com.javabattle.arena.repository.CategoryRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -60,6 +62,9 @@ public class TeacherController {
     
     @Autowired
     private TeacherMaterialRepository teacherMaterialRepository;
+    
+    @Autowired
+    private CategoryRepository categoryRepository;
     
     @GetMapping("/api/teacher/active-students")
     @ResponseBody
@@ -551,6 +556,9 @@ public class TeacherController {
             material.setTeacherId(1L);
             material.setIsShared(false);
             material.setCreatedAt(LocalDateTime.now());
+            material.setUpdatedAt(LocalDateTime.now());
+            material.setVersion("v1.0");
+            material.setIsLatestVersion(true);
             
             if (file != null && !file.isEmpty()) {
                 System.out.println("파일 처리 중: " + file.getOriginalFilename());
@@ -613,7 +621,10 @@ public class TeacherController {
                 data.put("fileSize", material.getFileSize());
                 data.put("youtubeUrl", material.getYoutubeUrl());
                 data.put("createdAt", material.getCreatedAt());
+                data.put("updatedAt", material.getUpdatedAt());
                 data.put("shared", material.getIsShared());
+                data.put("version", material.getVersion());
+                data.put("isLatestVersion", material.getIsLatestVersion());
                 return data;
             }).collect(Collectors.toList());
             
@@ -674,6 +685,7 @@ public class TeacherController {
             
             boolean previouslyShared = material.getIsShared() != null && material.getIsShared();
             material.setIsShared(!previouslyShared);
+            material.setUpdatedAt(LocalDateTime.now());
             
             System.out.println("공유 상태 변경: " + previouslyShared + " -> " + material.getIsShared());
             
@@ -747,6 +759,7 @@ public class TeacherController {
                 material.setTags(request.get("tags"));
             }
             
+            material.setUpdatedAt(LocalDateTime.now());
             teacherMaterialRepository.save(material);
             
             Map<String, Object> response = new HashMap<>();
@@ -924,12 +937,252 @@ public class TeacherController {
             return "material-error";
         }
     }
-    
+
     @GetMapping("/api/teacher/materials/{id}/view")
     @ResponseBody
     public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.FOUND)
             .header(HttpHeaders.LOCATION, "/material-preview/" + id)
             .build();
+    }
+
+    @GetMapping("/api/teacher/categories")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getCategories() {
+        try {
+            List<Category> categories = categoryRepository.findAllOrderByCreatedAtDesc();
+            
+            List<Map<String, Object>> result = categories.stream().map(category -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", category.getId());
+                data.put("name", category.getName());
+                data.put("description", category.getDescription());
+                data.put("color", category.getColor());
+                data.put("createdAt", category.getCreatedAt());
+                return data;
+            }).collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("categories", result);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "카테고리 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/categories")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> createCategory(@RequestBody Map<String, Object> request) {
+        try {
+            String name = (String) request.get("name");
+            String description = (String) request.get("description");
+            String color = (String) request.get("color");
+            
+            if (name == null || name.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "카테고리 이름은 필수입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (categoryRepository.existsByName(name)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "이미 존재하는 카테고리 이름입니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            Category category = new Category();
+            category.setName(name);
+            category.setDescription(description);
+            category.setColor(color != null ? color : "#3498db");
+            category.setTeacherId(1L);
+            category.setCreatedAt(LocalDateTime.now());
+            category.setUpdatedAt(LocalDateTime.now());
+            
+            Category saved = categoryRepository.save(category);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "카테고리가 생성되었습니다.");
+            response.put("category", saved);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "카테고리 생성 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/api/teacher/categories/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateCategory(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        try {
+            Category category = categoryRepository.findById(id).orElse(null);
+            if (category == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "카테고리를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            if (request.get("name") != null) {
+                category.setName((String) request.get("name"));
+            }
+            if (request.get("description") != null) {
+                category.setDescription((String) request.get("description"));
+            }
+            if (request.get("color") != null) {
+                category.setColor((String) request.get("color"));
+            }
+            
+            category.setUpdatedAt(LocalDateTime.now());
+            categoryRepository.save(category);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "카테고리가 수정되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "카테고리 수정 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @DeleteMapping("/api/teacher/categories/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteCategory(@PathVariable Long id) {
+        try {
+            if (!categoryRepository.existsById(id)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "카테고리를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            categoryRepository.deleteById(id);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "카테고리가 삭제되었습니다.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "카테고리 삭제 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/api/teacher/materials/{id}/versions")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getMaterialVersions(@PathVariable Long id) {
+        try {
+            TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
+            if (material == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "자료를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            Long parentId = material.getParentMaterialId() != null ? material.getParentMaterialId() : id;
+            List<TeacherMaterial> versions = teacherMaterialRepository.findByParentMaterialIdOrId(parentId, parentId);
+            
+            List<Map<String, Object>> result = versions.stream().map(version -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", version.getId());
+                data.put("title", version.getTitle());
+                data.put("version", version.getVersion());
+                data.put("createdAt", version.getCreatedAt());
+                data.put("updatedAt", version.getUpdatedAt());
+                data.put("isLatestVersion", version.getIsLatestVersion());
+                return data;
+            }).collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("versions", result);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "버전 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/api/teacher/materials/{id}/create-version")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> createMaterialVersion(@PathVariable Long id, @RequestBody Map<String, Object> request) {
+        try {
+            TeacherMaterial originalMaterial = teacherMaterialRepository.findById(id).orElse(null);
+            if (originalMaterial == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "원본 자료를 찾을 수 없습니다.");
+                return ResponseEntity.notFound().build();
+            }
+            
+            String newTitle = (String) request.get("title");
+            String newDescription = (String) request.get("description");
+            
+            originalMaterial.setIsLatestVersion(false);
+            originalMaterial.setUpdatedAt(LocalDateTime.now());
+            teacherMaterialRepository.save(originalMaterial);
+            
+            TeacherMaterial newVersion = new TeacherMaterial();
+            newVersion.setTitle(newTitle != null ? newTitle : originalMaterial.getTitle());
+            newVersion.setDescription(newDescription != null ? newDescription : originalMaterial.getDescription());
+            newVersion.setCategory(originalMaterial.getCategory());
+            newVersion.setTags(originalMaterial.getTags());
+            newVersion.setMaterialType(originalMaterial.getMaterialType());
+            newVersion.setFileName(originalMaterial.getFileName());
+            newVersion.setFileSize(originalMaterial.getFileSize());
+            newVersion.setFileData(originalMaterial.getFileData());
+            newVersion.setContent(originalMaterial.getContent());
+            newVersion.setYoutubeUrl(originalMaterial.getYoutubeUrl());
+            newVersion.setTeacherId(originalMaterial.getTeacherId());
+            newVersion.setIsShared(originalMaterial.getIsShared());
+            newVersion.setParentMaterialId(originalMaterial.getParentMaterialId() != null ? originalMaterial.getParentMaterialId() : id);
+            newVersion.setIsLatestVersion(true);
+            newVersion.setCreatedAt(LocalDateTime.now());
+            newVersion.setUpdatedAt(LocalDateTime.now());
+            
+            int versionNumber = teacherMaterialRepository.countByParentMaterialId(newVersion.getParentMaterialId()) + 1;
+            newVersion.setVersion("v" + versionNumber + ".0");
+            
+            TeacherMaterial saved = teacherMaterialRepository.save(newVersion);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "새 버전이 생성되었습니다.");
+            response.put("version", saved);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "버전 생성 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
