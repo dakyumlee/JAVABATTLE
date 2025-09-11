@@ -55,7 +55,7 @@ public class StatisticsController {
         return "statistics";
     }
 
-    @GetMapping("/overview")
+    @GetMapping("/api/statistics/overview")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getOverview(HttpServletRequest request) {
         if (!isAuthorized(request)) {
@@ -218,7 +218,7 @@ public class StatisticsController {
             
             List<User> students = userRepository.findByRole("STUDENT");
             for (User student : students) {
-                Long problemsSolved = problemSubmissionRepository.countByUserIdAndScoreIsNotNull(student.getId());
+                Long problemsSolved = problemSubmissionRepository.countByUserIdAndIsCorrect(student.getId(), true);
                 Long quizzesCompleted = quizSubmissionRepository.countByUserId(student.getId());
                 Double avgScore = quizSubmissionRepository.getAverageScoreByUserId(student.getId());
                 LocalDateTime lastActivity = studentActivityRepository.findTopByStudentIdOrderByTimestampDesc(student.getId());
@@ -267,7 +267,7 @@ public class StatisticsController {
             
             List<User> students = userRepository.findByRole("STUDENT");
             for (User student : students) {
-                Long problemsSolved = problemSubmissionRepository.countByUserIdAndScoreIsNotNull(student.getId());
+                Long problemsSolved = problemSubmissionRepository.countByUserIdAndIsCorrect(student.getId(), true);
                 Long quizzesCompleted = quizSubmissionRepository.countByUserId(student.getId());
                 Double avgScore = quizSubmissionRepository.getAverageScoreByUserId(student.getId());
                 LocalDateTime lastActivity = studentActivityRepository.findTopByStudentIdOrderByTimestampDesc(student.getId());
