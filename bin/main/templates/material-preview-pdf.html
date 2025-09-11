@@ -72,12 +72,12 @@
         <embed th:src="${filePath}" type="application/pdf" class="pdf-viewer">
             <p style="color: #e74c3c; margin: 2rem;">
                 PDF를 표시할 수 없습니다. 
-                <a th:href="${filePath}" class="download-link">다운로드하여 보기</a>
+                <a th:href="@{'/api/teacher/materials/' + ${materialId} + '/download'}" class="download-link">다운로드하여 보기</a>
             </p>
         </embed>
         
         <div style="margin-top: 1rem;">
-            <a th:href="${filePath}" class="download-link">📥 파일 다운로드</a>
+            <a th:href="@{'/api/teacher/materials/' + ${materialId} + '/download'}" class="download-link">파일 다운로드</a>
         </div>
     </div>
 </body>
