@@ -1,97 +1,35 @@
-package com.javabattle.arena.model;
+package com.javabattle.arena.repository;
 
-import jakarta.persistence.*;
+import com.javabattle.arena.model.ProblemSubmission;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Entity
-@Table(name = "problem_submissions")
-public class ProblemSubmission {
+@Repository
+public interface ProblemSubmissionRepository extends JpaRepository<ProblemSubmission, Long> {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Query("SELECT p FROM ProblemSubmission p ORDER BY p.submittedAt DESC")
+    List<ProblemSubmission> findAllOrderBySubmittedAtDesc();
     
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    List<ProblemSubmission> findByUserIdOrderBySubmittedAtDesc(Long userId);
     
-    @Column(name = "problem_title", length = 500)
-    private String problemTitle;
+    List<ProblemSubmission> findByProblemTitleOrderBySubmittedAtDesc(String problemTitle);
     
-    @Column(columnDefinition = "TEXT")
-    private String answer;
+    @Query("SELECT COUNT(p) FROM ProblemSubmission p WHERE p.score IS NOT NULL")
+    long countGradedSubmissions();
     
-    @Column(name = "submitted_at", nullable = false)
-    private LocalDateTime submittedAt;
+    @Query("SELECT COUNT(p) FROM ProblemSubmission p WHERE p.score IS NULL")
+    long countUngradedSubmissions();
     
-    private Integer score;
+    @Query("SELECT AVG(p.score) FROM ProblemSubmission p WHERE p.score IS NOT NULL")
+    Double getAverageScore();
+
+    Long countBySubmittedAtAfter(LocalDateTime start);
     
-    @Column(columnDefinition = "TEXT")
-    private String feedback;
+    Long countBySubmittedAtBetween(LocalDateTime start, LocalDateTime end);
     
-    public ProblemSubmission() {
-        this.submittedAt = LocalDateTime.now();
-    }
-    
-    public ProblemSubmission(Long userId, String problemTitle, String answer) {
-        this.userId = userId;
-        this.problemTitle = problemTitle;
-        this.answer = answer;
-        this.submittedAt = LocalDateTime.now();
-    }
-    
-    public Long getId() {
-        return id;
-    }
-    
-    public void setId(Long id) {
-        this.id = id;
-    }
-    
-    public Long getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-    
-    public String getProblemTitle() {
-        return problemTitle;
-    }
-    
-    public void setProblemTitle(String problemTitle) {
-        this.problemTitle = problemTitle;
-    }
-    
-    public String getAnswer() {
-        return answer;
-    }
-    
-    public void setAnswer(String answer) {
-        this.answer = answer;
-    }
-    
-    public LocalDateTime getSubmittedAt() {
-        return submittedAt;
-    }
-    
-    public void setSubmittedAt(LocalDateTime submittedAt) {
-        this.submittedAt = submittedAt;
-    }
-    
-    public Integer getScore() {
-        return score;
-    }
-    
-    public void setScore(Integer score) {
-        this.score = score;
-    }
-    
-    public String getFeedback() {
-        return feedback;
-    }
-    
-    public void setFeedback(String feedback) {
-        this.feedback = feedback;
-    }
+    @Query("SELECT COUNT(p) FROM ProblemSubmission p WHERE p.userId = :userId AND p.score IS NOT NULL AND p.score > 0")
+    Long countByUserIdAndIsCorrect(@Param("userId") Long userId, @Param("isCorrect") Boolean isCorrect);
 }
