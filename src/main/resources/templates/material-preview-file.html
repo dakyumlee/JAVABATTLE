@@ -86,7 +86,7 @@
             <p style="color: #f39c12; margin: 1rem 0;">
                 이 파일 형식은 브라우저에서 직접 미리보기할 수 없습니다.
             </p>
-            <a th:href="${filePath}" class="download-link">📥 파일 다운로드</a>
+            <a th:href="@{'/api/teacher/materials/' + ${materialId} + '/download'}" class="download-link">📥 파일 다운로드</a>
         </div>
     </div>
 </body>

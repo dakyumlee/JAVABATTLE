@@ -633,10 +633,12 @@ public class TeacherController {
     }
 
     @PostMapping("/api/teacher/materials/{id}/share")
-    public ResponseEntity<Map<String, Object>> shareMaterial(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> shareMaterial(@PathVariable Long id, HttpServletRequest request) {
         try {
             System.out.println("=== 자료 공유 요청 ===");
             System.out.println("Material ID: " + id);
+            System.out.println("요청 헤더: " + request.getHeader("Content-Type"));
+            System.out.println("요청 메서드: " + request.getMethod());
             
             TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
             if (material == null) {
@@ -647,13 +649,16 @@ public class TeacherController {
                 return ResponseEntity.notFound().build();
             }
             
+            System.out.println("찾은 자료: " + material.getTitle());
+            System.out.println("현재 공유 상태: " + material.getIsShared());
+            
             boolean previouslyShared = material.getIsShared() != null && material.getIsShared();
             material.setIsShared(!previouslyShared);
             
             System.out.println("공유 상태 변경: " + previouslyShared + " -> " + material.getIsShared());
             
             TeacherMaterial saved = teacherMaterialRepository.save(material);
-            System.out.println("DB 저장 완료");
+            System.out.println("DB 저장 완료. 새 공유 상태: " + saved.getIsShared());
 
             if (saved.getIsShared()) {
                 Map<String, Object> materialData = new HashMap<>();
@@ -666,8 +671,15 @@ public class TeacherController {
                 materialData.put("materialId", saved.getId());
                 
                 System.out.println("WebSocket 알림 전송 중...");
-                messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
-                System.out.println("WebSocket 알림 전송 완료");
+                System.out.println("알림 데이터: " + materialData);
+                
+                try {
+                    messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
+                    System.out.println("WebSocket 알림 전송 완료");
+                } catch (Exception wsError) {
+                    System.out.println("WebSocket 알림 전송 실패: " + wsError.getMessage());
+                    wsError.printStackTrace();
+                }
             }
             
             Map<String, Object> response = new HashMap<>();
@@ -675,12 +687,14 @@ public class TeacherController {
             response.put("shared", saved.getIsShared());
             response.put("message", saved.getIsShared() ? "학생들에게 공유되었습니다." : "공유가 중지되었습니다.");
             
-            System.out.println("공유 응답: " + response);
+            System.out.println("최종 응답: " + response);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            System.out.println("공유 실패: " + e.getMessage());
+            System.out.println("공유 처리 중 예외 발생: " + e.getClass().getSimpleName());
+            System.out.println("예외 메시지: " + e.getMessage());
             e.printStackTrace();
+            
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "공유 설정 중 오류가 발생했습니다: " + e.getMessage());
@@ -863,6 +877,7 @@ public class TeacherController {
                 if (material.getDescription() != null && !material.getDescription().trim().isEmpty()) {
                     model.addAttribute("textContent", material.getDescription());
                 }
+                model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
             }
             
             if (fileType.startsWith("image/")) {
@@ -880,6 +895,7 @@ public class TeacherController {
                     extension = material.getFileName().substring(material.getFileName().lastIndexOf(".") + 1);
                 }
                 model.addAttribute("fileExtension", extension.toUpperCase());
+                model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
                 System.out.println("파일 템플릿 반환: " + extension);
                 return "material-preview-file";
             }
