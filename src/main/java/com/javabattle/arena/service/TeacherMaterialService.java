@@ -4,10 +4,11 @@ import com.javabattle.arena.model.TeacherMaterial;
 import com.javabattle.arena.repository.TeacherMaterialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TeacherMaterialService {
@@ -15,67 +16,93 @@ public class TeacherMaterialService {
     @Autowired
     private TeacherMaterialRepository teacherMaterialRepository;
 
+    public TeacherMaterial uploadMaterial(String title, String description, String category, 
+                                        String tags, MultipartFile file, Long teacherId) {
+        try {
+            TeacherMaterial material = new TeacherMaterial();
+            material.setTitle(title);
+            material.setDescription(description);
+            material.setCategory(category);
+            material.setTags(tags);
+            material.setTeacherId(teacherId);
+            material.setCreatedAt(LocalDateTime.now());
+            material.setIsShared(false);
+
+            if (file != null && !file.isEmpty()) {
+                material.setFileName(file.getOriginalFilename());
+                material.setFileSize(file.getSize());
+                material.setMaterialType(file.getContentType());
+                material.setFileData(file.getBytes());
+            } else {
+                material.setMaterialType("text");
+                material.setContent(description);
+            }
+
+            return teacherMaterialRepository.save(material);
+        } catch (Exception e) {
+            throw new RuntimeException("자료 업로드 실패: " + e.getMessage(), e);
+        }
+    }
+
     public List<TeacherMaterial> getAllMaterials() {
         return teacherMaterialRepository.findAllOrderByCreatedAtDesc();
     }
 
-    public List<TeacherMaterial> getMaterialsByCategory(String category) {
-        return teacherMaterialRepository.findAllOrderByCreatedAtDesc()
-                .stream()
-                .filter(material -> category.equals(material.getCategory()))
-                .collect(Collectors.toList());
-    }
-
     public List<TeacherMaterial> getSharedMaterials() {
-        return teacherMaterialRepository.findAllOrderByCreatedAtDesc()
-                .stream()
-                .filter(material -> Boolean.TRUE.equals(material.getShared()))
-                .collect(Collectors.toList());
+        return teacherMaterialRepository.findSharedMaterials();
     }
 
-    public List<TeacherMaterial> getMaterialsByTeacher(Long teacherId) {
-        return teacherMaterialRepository.findByTeacherId(teacherId);
-    }
-
-    public List<TeacherMaterial> getSharedMaterialsByTeacher(Long teacherId) {
-        return teacherMaterialRepository.findByTeacherId(teacherId)
-                .stream()
-                .filter(material -> Boolean.TRUE.equals(material.getShared()))
-                .collect(Collectors.toList());
-    }
-
-    public List<TeacherMaterial> getMaterialsByType(String fileType) {
-        return teacherMaterialRepository.findByFileType(fileType);
-    }
-
-    public TeacherMaterial saveMaterial(TeacherMaterial material) {
-        return teacherMaterialRepository.save(material);
-    }
-
-    public void deleteMaterial(Long id) {
-        teacherMaterialRepository.deleteById(id);
-    }
-
-    public Optional<TeacherMaterial> findById(Long id) {
+    public Optional<TeacherMaterial> getMaterialById(Long id) {
         return teacherMaterialRepository.findById(id);
     }
 
-    public TeacherMaterial findByIdOrNull(Long id) {
-        return teacherMaterialRepository.findById(id).orElse(null);
+    public TeacherMaterial shareMaterial(Long id, boolean shared) {
+        Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
+        if (materialOpt.isPresent()) {
+            TeacherMaterial material = materialOpt.get();
+            material.setIsShared(shared);
+            return teacherMaterialRepository.save(material);
+        }
+        throw new RuntimeException("자료를 찾을 수 없습니다: " + id);
     }
 
-    public boolean existsById(Long id) {
-        return teacherMaterialRepository.existsById(id);
+    public void deleteMaterial(Long id) {
+        if (teacherMaterialRepository.existsById(id)) {
+            teacherMaterialRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("자료를 찾을 수 없습니다: " + id);
+        }
     }
 
-    public long countMaterialsByTeacher(Long teacherId) {
-        return teacherMaterialRepository.findByTeacherId(teacherId).size();
+    public TeacherMaterial updateMaterial(Long id, String title, String description, 
+                                        String category, String tags) {
+        Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
+        if (materialOpt.isPresent()) {
+            TeacherMaterial material = materialOpt.get();
+            
+            if (title != null) material.setTitle(title);
+            if (description != null) material.setDescription(description);
+            if (category != null) material.setCategory(category);
+            if (tags != null) material.setTags(tags);
+            
+            return teacherMaterialRepository.save(material);
+        }
+        throw new RuntimeException("자료를 찾을 수 없습니다: " + id);
     }
 
-    public long countSharedMaterialsByTeacher(Long teacherId) {
-        return teacherMaterialRepository.findByTeacherId(teacherId)
-                .stream()
-                .filter(material -> Boolean.TRUE.equals(material.getShared()))
-                .count();
+    public TeacherMaterial addYouTubeLink(String title, String description, String category,
+                                        String tags, String url, Long teacherId) {
+        TeacherMaterial material = new TeacherMaterial();
+        material.setTitle(title);
+        material.setDescription(description);
+        material.setCategory(category);
+        material.setTags(tags);
+        material.setYoutubeUrl(url);
+        material.setMaterialType("youtube");
+        material.setTeacherId(teacherId);
+        material.setCreatedAt(LocalDateTime.now());
+        material.setIsShared(false);
+        
+        return teacherMaterialRepository.save(material);
     }
 }
