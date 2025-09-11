@@ -29,8 +29,7 @@ public class TeacherMaterial {
     @Column(name = "file_size")
     private Long fileSize;
     
-    @Lob
-    @Column(name = "file_data", columnDefinition = "BYTEA")
+    @Column(name = "file_data")
     private byte[] fileData;
     
     private String content;
