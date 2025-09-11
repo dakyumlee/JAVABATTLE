@@ -831,11 +831,19 @@ public class TeacherController {
             model.addAttribute("fileName", material.getFileName());
             model.addAttribute("fileType", fileType);
             
+            String downloadPath = "/api/teacher/materials/" + id + "/download";
+            model.addAttribute("filePath", downloadPath);
+            
             if (material.getFileData() != null) {
                 String base64Data = Base64.getEncoder().encodeToString(material.getFileData());
-                model.addAttribute("fileData", base64Data);
                 
-                if (fileType.startsWith("text/") || fileType.equals("application/json")) {
+                if (fileType.startsWith("image/")) {
+                    String dataUrl = "data:" + fileType + ";base64," + base64Data;
+                    model.addAttribute("filePath", dataUrl);
+                } else if (fileType.equals("application/pdf")) {
+                    String dataUrl = "data:application/pdf;base64," + base64Data;
+                    model.addAttribute("filePath", dataUrl);
+                } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
                     String textContent = new String(material.getFileData());
                     model.addAttribute("textContent", textContent);
                 }
@@ -848,6 +856,11 @@ public class TeacherController {
             } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
                 return "material-preview-text";
             } else {
+                String extension = "";
+                if (material.getFileName() != null && material.getFileName().contains(".")) {
+                    extension = material.getFileName().substring(material.getFileName().lastIndexOf(".") + 1);
+                }
+                model.addAttribute("fileExtension", extension.toUpperCase());
                 return "material-preview-file";
             }
             
@@ -856,12 +869,5 @@ public class TeacherController {
             model.addAttribute("error", "미리보기 중 오류가 발생했습니다: " + e.getMessage());
             return "material-error";
         }
-    }
-
-    @GetMapping("/api/teacher/materials/{id}/view")
-    public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
-        return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, "/material-preview/" + id)
-            .build();
     }
 }
