@@ -1002,7 +1002,7 @@ public class TeacherController {
             category.setName(name);
             category.setDescription(description);
             category.setColor(color != null ? color : "#3498db");
-            category.setTeacherId(1L);
+            category.setUserId(1L);
             category.setCreatedAt(LocalDateTime.now());
             category.setUpdatedAt(LocalDateTime.now());
             

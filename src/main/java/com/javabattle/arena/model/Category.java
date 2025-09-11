@@ -11,15 +11,15 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     private String description;
 
     private String color;
 
-    @Column(name = "teacher_id")
-    private Long teacherId;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -41,8 +41,8 @@ public class Category {
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
 
-    public Long getTeacherId() { return teacherId; }
-    public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
