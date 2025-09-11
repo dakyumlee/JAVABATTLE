@@ -13,6 +13,10 @@ import com.javabattle.arena.repository.TeacherNoteRepository;
 import com.javabattle.arena.repository.TeacherMaterialRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -519,6 +524,7 @@ public class TeacherController {
                 material.setFileName(file.getOriginalFilename());
                 material.setFileSize(file.getSize());
                 material.setMaterialType(file.getContentType());
+                material.setFileData(file.getBytes());
             } else {
                 material.setMaterialType("text");
             }
@@ -607,6 +613,7 @@ public class TeacherController {
                 material.setFileName(file.getOriginalFilename());
                 material.setFileSize(file.getSize());
                 material.setMaterialType(file.getContentType());
+                material.setFileData(file.getBytes());
             } else {
                 material.setMaterialType("text");
             }
@@ -761,6 +768,61 @@ public class TeacherController {
             response.put("success", false);
             response.put("message", "수정 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/api/teacher/materials/{id}/download")
+    public ResponseEntity<Resource> downloadMaterial(@PathVariable Long id) {
+        try {
+            Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
+            if (!materialOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            TeacherMaterial material = materialOpt.get();
+            
+            if (material.getFileData() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            ByteArrayResource resource = new ByteArrayResource(material.getFileData());
+            
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, 
+                    "attachment; filename=\"" + material.getFileName() + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
+                .body(resource);
+                
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/api/teacher/materials/{id}/view")
+    public ResponseEntity<Resource> viewMaterial(@PathVariable Long id) {
+        try {
+            Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
+            if (!materialOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            TeacherMaterial material = materialOpt.get();
+            
+            if (material.getFileData() == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            ByteArrayResource resource = new ByteArrayResource(material.getFileData());
+            
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
+                .body(resource);
+                
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
