@@ -17,6 +17,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -33,8 +34,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Base64;
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 
-@RestController
 @Controller
 public class TeacherController {
     
@@ -60,6 +62,7 @@ public class TeacherController {
     private TeacherMaterialRepository teacherMaterialRepository;
     
     @GetMapping("/api/teacher/active-students")
+    @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getActiveStudents() {
         try {
             List<ActiveSession> sessions = sessionService.getActiveSessions();
@@ -86,6 +89,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/send-hint")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> sendHint(@RequestBody Map<String, Object> request) {
         try {
             Long studentId = Long.valueOf(request.get("studentId").toString());
@@ -117,6 +121,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/global-hint")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> sendGlobalHint(@RequestBody Map<String, Object> request) {
         try {
             String message = (String) request.get("message");
@@ -143,6 +148,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/create-problem")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> createProblem(@RequestBody Map<String, Object> request) {
         try {
             String title = (String) request.get("title");
@@ -171,6 +177,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/quick-quiz")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> sendQuickQuiz(@RequestBody Map<String, Object> request) {
         try {
             String title = (String) request.get("title");
@@ -204,6 +211,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/student/submit-answer")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> submitAnswer(@RequestBody Map<String, Object> request) {
         try {
             Object userIdObj = request.get("userId");
@@ -258,6 +266,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/student/submit-quiz")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> submitQuiz(@RequestBody Map<String, Object> request) {
         try {
             Object userIdObj = request.get("userId");
@@ -316,6 +325,7 @@ public class TeacherController {
     }
     
     @GetMapping("/api/teacher/submissions")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> getSubmissions() {
         try {
             List<ProblemSubmission> submissions = problemSubmissionRepository.findAllOrderBySubmittedAtDesc();
@@ -348,6 +358,7 @@ public class TeacherController {
     }
     
     @GetMapping("/api/teacher/quiz-submissions")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> getQuizSubmissions() {
         try {
             List<QuizSubmission> submissions = quizSubmissionRepository.findAllOrderBySubmittedAtDesc();
@@ -386,6 +397,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/submissions/{id}/score")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> scoreSubmission(
             @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
@@ -420,6 +432,7 @@ public class TeacherController {
     }
     
     @PostMapping("/api/teacher/notes")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> createNote(@RequestBody Map<String, Object> noteData) {
         try {
             TeacherNote note = new TeacherNote();
@@ -448,6 +461,7 @@ public class TeacherController {
     }
     
     @GetMapping("/api/teacher/notes")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> getNotes() {
         try {
             List<TeacherNote> notes = teacherNoteRepository.findAll();
@@ -467,6 +481,7 @@ public class TeacherController {
     }
     
     @DeleteMapping("/api/teacher/notes/{id}")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> deleteNote(@PathVariable Long id) {
         try {
             teacherNoteRepository.deleteById(id);
@@ -486,6 +501,7 @@ public class TeacherController {
     }
     
     @GetMapping("/api/users/all")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> getAllUsers() {
         try {
             List<User> users = userRepository.findAll();
@@ -512,6 +528,7 @@ public class TeacherController {
     }
 
     @PostMapping("/api/teacher/materials/upload")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> uploadMaterial(
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam("title") String title,
@@ -579,6 +596,7 @@ public class TeacherController {
     }
 
     @GetMapping("/api/teacher/materials")
+    @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getMaterials() {
         try {
             List<TeacherMaterial> materials = teacherMaterialRepository.findAllOrderByCreatedAtDesc();
@@ -607,6 +625,7 @@ public class TeacherController {
     }
 
     @DeleteMapping("/api/teacher/materials/{id}")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> deleteMaterial(@PathVariable Long id) {
         try {
             if (!teacherMaterialRepository.existsById(id)) {
@@ -633,6 +652,7 @@ public class TeacherController {
     }
 
     @PostMapping("/api/teacher/materials/{id}/share")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> shareMaterial(@PathVariable Long id, HttpServletRequest request) {
         try {
             System.out.println("=== 자료 공유 요청 ===");
@@ -703,6 +723,7 @@ public class TeacherController {
     }
 
     @PutMapping("/api/teacher/materials/{id}")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> updateMaterial(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
             TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
@@ -743,6 +764,7 @@ public class TeacherController {
     }
 
     @GetMapping("/api/teacher/materials/shared")
+    @ResponseBody
     public ResponseEntity<Map<String, Object>> getSharedMaterials() {
         try {
             List<TeacherMaterial> materials = teacherMaterialRepository.findSharedMaterials();
@@ -778,6 +800,7 @@ public class TeacherController {
     }
 
     @GetMapping("/api/teacher/materials/{id}/download")
+    @ResponseBody
     public ResponseEntity<Resource> downloadMaterial(@PathVariable Long id) {
         try {
             System.out.println("=== 파일 다운로드 요청 ===");
@@ -808,13 +831,21 @@ public class TeacherController {
                 filename = "material_" + id;
             }
             
+            String encodedFilename;
+            try {
+                encodedFilename = URLEncoder.encode(filename, "UTF-8").replaceAll("\\+", "%20");
+            } catch (UnsupportedEncodingException e) {
+                encodedFilename = filename;
+            }
+            
             System.out.println("다운로드 파일명: " + filename);
             
             return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, 
-                    "attachment; filename=\"" + filename + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
-                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(material.getFileData().length))
+                    "attachment; filename=\"" + encodedFilename + "\"")
+                .contentType(MediaType.parseMediaType(material.getMaterialType() != null ? 
+                    material.getMaterialType() : "application/octet-stream"))
+                .contentLength(material.getFileData().length)
                 .body(resource);
                 
         } catch (Exception e) {
@@ -909,6 +940,7 @@ public class TeacherController {
     }
 
     @GetMapping("/api/teacher/materials/{id}/view")
+    @ResponseBody
     public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.FOUND)
             .header(HttpHeaders.LOCATION, "/material-preview/" + id)
