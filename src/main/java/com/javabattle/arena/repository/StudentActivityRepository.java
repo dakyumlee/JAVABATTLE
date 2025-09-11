@@ -24,4 +24,7 @@ public interface StudentActivityRepository extends JpaRepository<StudentActivity
     
     @Query("SELECT MAX(s.timestamp) FROM StudentActivity s WHERE s.studentId = :studentId")
     LocalDateTime findTopByStudentIdOrderByTimestampDesc(@Param("studentId") Long studentId);
+    
+    @Query("SELECT COUNT(DISTINCT s.studentId) FROM StudentActivity s WHERE s.timestamp BETWEEN :start AND :end")
+    Long countBySubmittedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
