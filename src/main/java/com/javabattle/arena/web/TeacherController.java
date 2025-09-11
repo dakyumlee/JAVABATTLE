@@ -19,9 +19,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,8 +32,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Base64;
 
 @RestController
+@Controller
 public class TeacherController {
     
     @Autowired
@@ -787,9 +792,14 @@ public class TeacherController {
             
             ByteArrayResource resource = new ByteArrayResource(material.getFileData());
             
+            String filename = material.getFileName();
+            if (filename == null || filename.isEmpty()) {
+                filename = "material_" + id;
+            }
+            
             return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, 
-                    "attachment; filename=\"" + material.getFileName() + "\"")
+                    "attachment; filename=\"" + filename + "\"")
                 .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
                 .body(resource);
                 
@@ -799,30 +809,59 @@ public class TeacherController {
         }
     }
 
-    @GetMapping("/api/teacher/materials/{id}/view")
-    public ResponseEntity<Resource> viewMaterial(@PathVariable Long id) {
+    @GetMapping("/material-preview/{id}")
+    public String viewMaterial(@PathVariable Long id, Model model) {
         try {
             Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
             if (!materialOpt.isPresent()) {
-                return ResponseEntity.notFound().build();
+                model.addAttribute("error", "자료를 찾을 수 없습니다.");
+                return "material-error";
             }
             
             TeacherMaterial material = materialOpt.get();
+            String fileType = material.getMaterialType();
             
-            if (material.getFileData() == null) {
-                return ResponseEntity.notFound().build();
+            if (fileType == null) {
+                fileType = "text/plain";
             }
             
-            ByteArrayResource resource = new ByteArrayResource(material.getFileData());
+            model.addAttribute("material", material);
+            model.addAttribute("materialId", id);
+            model.addAttribute("title", material.getTitle());
+            model.addAttribute("fileName", material.getFileName());
+            model.addAttribute("fileType", fileType);
             
-            return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
-                .body(resource);
+            if (material.getFileData() != null) {
+                String base64Data = Base64.getEncoder().encodeToString(material.getFileData());
+                model.addAttribute("fileData", base64Data);
                 
+                if (fileType.startsWith("text/") || fileType.equals("application/json")) {
+                    String textContent = new String(material.getFileData());
+                    model.addAttribute("textContent", textContent);
+                }
+            }
+            
+            if (fileType.startsWith("image/")) {
+                return "material-preview-image";
+            } else if (fileType.equals("application/pdf")) {
+                return "material-preview-pdf";
+            } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
+                return "material-preview-text";
+            } else {
+                return "material-preview-file";
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            model.addAttribute("error", "미리보기 중 오류가 발생했습니다: " + e.getMessage());
+            return "material-error";
         }
+    }
+
+    @GetMapping("/api/teacher/materials/{id}/view")
+    public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.FOUND)
+            .header(HttpHeaders.LOCATION, "/material-preview/" + id)
+            .build();
     }
 }

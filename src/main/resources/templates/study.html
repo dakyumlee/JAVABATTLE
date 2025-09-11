@@ -923,7 +923,7 @@
             card.classList.add('new');
         }
         
-        const fileIcon = getFileIcon(material.fileType || material.type);
+        const fileIcon = getFileIcon(material.materialType || material.fileType || material.type);
         const fileSize = material.fileSize ? formatFileSize(material.fileSize) : '';
         
         card.innerHTML = `
@@ -931,17 +931,17 @@
                 <div class="material-title">${material.title}</div>
                 <div class="material-category">${material.category || '일반'}</div>
             </div>
-            <div class="material-description">${material.description || '설명이 없습니다.'}</div>
+            <div class="material-description">${material.content || material.description || '설명이 없습니다.'}</div>
             <div class="material-meta">
                 <div class="material-type">
                     <span>${fileIcon}</span>
-                    <span>${(material.fileType || material.type || 'file').toUpperCase()}</span>
+                    <span>${(material.materialType || material.fileType || material.type || 'file').toUpperCase()}</span>
                     ${fileSize ? `<span>(${fileSize})</span>` : ''}
                 </div>
                 <div class="material-date">${formatDate(material.createdAt)}</div>
             </div>
             <div class="material-actions">
-                ${(material.fileType === 'youtube' || material.type === 'youtube') ? 
+                ${(material.materialType === 'youtube' || material.type === 'youtube') ? 
                     `<button class="action-btn" onclick="openYoutube('${material.youtubeUrl || material.url}')">▶️ 시청하기</button>` :
                     `<button class="action-btn" onclick="downloadMaterial(${material.id})">📥 다운로드</button>`
                 }
@@ -955,20 +955,36 @@
     function getFileIcon(fileType) {
         const icons = {
             'pdf': '📄',
+            'application/pdf': '📄',
             'ppt': '📊',
             'pptx': '📊',
+            'application/vnd.ms-powerpoint': '📊',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': '📊',
             'doc': '📝',
             'docx': '📝',
+            'application/msword': '📝',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
             'jpg': '🖼️',
             'jpeg': '🖼️',
             'png': '🖼️',
             'gif': '🖼️',
+            'image/jpeg': '🖼️',
+            'image/jpg': '🖼️',
+            'image/png': '🖼️',
+            'image/gif': '🖼️',
             'mp4': '🎥',
             'avi': '🎥',
             'mov': '🎥',
+            'video/mp4': '🎥',
+            'video/avi': '🎥',
+            'video/quicktime': '🎥',
             'youtube': '📺',
             'zip': '📦',
-            'rar': '📦'
+            'rar': '📦',
+            'application/zip': '📦',
+            'application/x-rar-compressed': '📦',
+            'text': '📝',
+            'text/plain': '📝'
         };
         return icons[fileType?.toLowerCase()] || '📄';
     }
@@ -1020,7 +1036,17 @@
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `material_${materialId}`;
+                
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = `material_${materialId}`;
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
@@ -1035,7 +1061,7 @@
     }
 
     function viewMaterial(materialId) {
-        window.open(`/api/teacher/materials/${materialId}/view`, '_blank');
+        window.open(`/material-preview/${materialId}`, '_blank');
     }
 
     function initializePage() {
@@ -1060,6 +1086,8 @@
     function loadLearningStats() {
         console.log('학습 통계 로드');
     }
+
+    window.loadSharedMaterials = loadSharedMaterials;
 
     document.addEventListener('DOMContentLoaded', initializePage);
 </script>
