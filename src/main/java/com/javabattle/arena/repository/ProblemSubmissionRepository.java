@@ -30,5 +30,6 @@ public interface ProblemSubmissionRepository extends JpaRepository<ProblemSubmis
     
     Long countBySubmittedAtBetween(LocalDateTime start, LocalDateTime end);
     
-    Long countByUserIdAndIsCorrect(Long userId, Boolean isCorrect);
+    Long countByUserIdAndScoreIsNotNull(Long userId);
+    
 }

@@ -152,7 +152,7 @@ public class StatisticsController {
             stats.put("nickname", student.getNickname());
             stats.put("email", student.getEmail());
             
-            Long problemsSolved = problemSubmissionRepository.countByUserIdAndIsCorrect(student.getId(), true);
+            Long problemsSolved = problemSubmissionRepository.countByUserIdAndScoreIsNotNull(student.getId());
             stats.put("problemsSolved", problemsSolved);
             
             Long quizzesCompleted = quizSubmissionRepository.countByUserId(student.getId());
