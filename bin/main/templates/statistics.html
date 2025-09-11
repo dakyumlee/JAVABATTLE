@@ -791,6 +791,12 @@
         }
 
         function updateStudentsTable(students) {
+            if (!students || students.length === 0) {
+                document.getElementById('studentsTableContent').innerHTML = 
+                    '<div style="padding: 2rem; text-align: center; color: #6c757d;">등록된 학생이 없습니다.</div>';
+                return;
+            }
+            
             const tableHTML = `
                 <table class="table">
                     <thead>
