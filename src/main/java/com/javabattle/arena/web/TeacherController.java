@@ -511,91 +511,6 @@ public class TeacherController {
         }
     }
 
-    @PostMapping("/api/teacher/shared-materials")
-    public ResponseEntity<Map<String, Object>> shareTeacherMaterial(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
-        
-        try {
-            TeacherMaterial material = new TeacherMaterial();
-            material.setTitle(title);
-            material.setContent(content);
-            material.setCreatedAt(LocalDateTime.now());
-            material.setTeacherId(1L);
-            material.setIsShared(true);
-            
-            if (file != null && !file.isEmpty()) {
-                material.setFileName(file.getOriginalFilename());
-                material.setFileSize(file.getSize());
-                material.setMaterialType(file.getContentType());
-                material.setFileData(file.getBytes());
-            } else {
-                material.setMaterialType("text");
-            }
-
-            TeacherMaterial saved = teacherMaterialRepository.save(material);
-
-            Map<String, Object> materialData = new HashMap<>();
-            materialData.put("type", "NEW_MATERIAL");
-            materialData.put("title", saved.getTitle());
-            materialData.put("content", saved.getContent());
-            materialData.put("materialType", saved.getMaterialType());
-            materialData.put("from", "teacher");
-            materialData.put("timestamp", LocalDateTime.now());
-            materialData.put("materialId", saved.getId());
-
-            messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "자료가 성공적으로 공유되었습니다.");
-            response.put("materialId", saved.getId());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "자료 공유 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @GetMapping("/api/teacher/materials/shared")
-    public ResponseEntity<Map<String, Object>> getSharedMaterials() {
-        try {
-            List<TeacherMaterial> materials = teacherMaterialRepository.findSharedMaterials();
-            
-            List<Map<String, Object>> materialList = materials.stream().map(material -> {
-                Map<String, Object> data = new HashMap<>();
-                data.put("id", material.getId());
-                data.put("title", material.getTitle());
-                data.put("content", material.getContent());
-                data.put("materialType", material.getMaterialType());
-                data.put("fileName", material.getFileName());
-                data.put("fileSize", material.getFileSize());
-                data.put("youtubeUrl", material.getYoutubeUrl());
-                data.put("createdAt", material.getCreatedAt());
-                return data;
-            }).collect(Collectors.toList());
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("materials", materialList);
-            response.put("totalCount", materialList.size());
-            
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "공유 자료 조회 중 오류가 발생했습니다: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
     @PostMapping("/api/teacher/materials/upload")
     public ResponseEntity<Map<String, Object>> uploadMaterial(
             @RequestParam(value = "file", required = false) MultipartFile file,
@@ -605,6 +520,12 @@ public class TeacherController {
             @RequestParam(value = "tags", required = false) String tags) {
         
         try {
+            System.out.println("=== 자료 업로드 시작 ===");
+            System.out.println("Title: " + title);
+            System.out.println("Description: " + description);
+            System.out.println("Category: " + category);
+            System.out.println("File: " + (file != null ? file.getOriginalFilename() : "없음"));
+            
             TeacherMaterial material = new TeacherMaterial();
             material.setTitle(title);
             material.setDescription(description);
@@ -615,15 +536,29 @@ public class TeacherController {
             material.setCreatedAt(LocalDateTime.now());
             
             if (file != null && !file.isEmpty()) {
+                System.out.println("파일 처리 중: " + file.getOriginalFilename());
+                System.out.println("파일 크기: " + file.getSize());
+                
                 material.setFileName(file.getOriginalFilename());
                 material.setFileSize(file.getSize());
                 material.setMaterialType(file.getContentType());
-                material.setFileData(file.getBytes());
+                
+                try {
+                    byte[] fileBytes = file.getBytes();
+                    System.out.println("파일 바이트 읽기 성공: " + fileBytes.length);
+                    material.setFileData(fileBytes);
+                } catch (Exception e) {
+                    System.out.println("파일 바이트 읽기 실패: " + e.getMessage());
+                    throw e;
+                }
             } else {
+                System.out.println("텍스트 자료로 처리");
                 material.setMaterialType("text");
             }
 
+            System.out.println("DB 저장 시작");
             TeacherMaterial saved = teacherMaterialRepository.save(material);
+            System.out.println("DB 저장 완료. ID: " + saved.getId());
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -633,6 +568,7 @@ public class TeacherController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
+            System.out.println("업로드 실패: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -776,6 +712,41 @@ public class TeacherController {
         }
     }
 
+    @GetMapping("/api/teacher/materials/shared")
+    public ResponseEntity<Map<String, Object>> getSharedMaterials() {
+        try {
+            List<TeacherMaterial> materials = teacherMaterialRepository.findSharedMaterials();
+            
+            List<Map<String, Object>> materialList = materials.stream().map(material -> {
+                Map<String, Object> data = new HashMap<>();
+                data.put("id", material.getId());
+                data.put("title", material.getTitle());
+                data.put("content", material.getContent());
+                data.put("description", material.getDescription());
+                data.put("materialType", material.getMaterialType());
+                data.put("fileName", material.getFileName());
+                data.put("fileSize", material.getFileSize());
+                data.put("youtubeUrl", material.getYoutubeUrl());
+                data.put("createdAt", material.getCreatedAt());
+                data.put("category", material.getCategory());
+                return data;
+            }).collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("materials", materialList);
+            response.put("totalCount", materialList.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "공유 자료 조회 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @GetMapping("/api/teacher/materials/{id}/download")
     public ResponseEntity<Resource> downloadMaterial(@PathVariable Long id) {
         try {
@@ -786,7 +757,7 @@ public class TeacherController {
             
             TeacherMaterial material = materialOpt.get();
             
-            if (material.getFileData() == null) {
+            if (material.getFileData() == null || material.getFileData().length == 0) {
                 return ResponseEntity.notFound().build();
             }
             
@@ -831,10 +802,7 @@ public class TeacherController {
             model.addAttribute("fileName", material.getFileName());
             model.addAttribute("fileType", fileType);
             
-            String downloadPath = "/api/teacher/materials/" + id + "/download";
-            model.addAttribute("filePath", downloadPath);
-            
-            if (material.getFileData() != null) {
+            if (material.getFileData() != null && material.getFileData().length > 0) {
                 String base64Data = Base64.getEncoder().encodeToString(material.getFileData());
                 
                 if (fileType.startsWith("image/")) {
@@ -847,13 +815,19 @@ public class TeacherController {
                     String textContent = new String(material.getFileData());
                     model.addAttribute("textContent", textContent);
                 }
+            } else {
+                String downloadPath = "/api/teacher/materials/" + id + "/download";
+                model.addAttribute("filePath", downloadPath);
             }
             
             if (fileType.startsWith("image/")) {
                 return "material-preview-image";
             } else if (fileType.equals("application/pdf")) {
                 return "material-preview-pdf";
-            } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
+            } else if (fileType.startsWith("text/") || fileType.equals("application/json") || fileType.equals("text")) {
+                if (material.getDescription() != null && !material.getDescription().trim().isEmpty()) {
+                    model.addAttribute("textContent", material.getDescription());
+                }
                 return "material-preview-text";
             } else {
                 String extension = "";
@@ -869,5 +843,12 @@ public class TeacherController {
             model.addAttribute("error", "미리보기 중 오류가 발생했습니다: " + e.getMessage());
             return "material-error";
         }
+    }
+
+    @GetMapping("/api/teacher/materials/{id}/view")
+    public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.FOUND)
+            .header(HttpHeaders.LOCATION, "/material-preview/" + id)
+            .build();
     }
 }
