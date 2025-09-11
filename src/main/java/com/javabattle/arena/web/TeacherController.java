@@ -554,6 +554,7 @@ public class TeacherController {
             } else {
                 System.out.println("텍스트 자료로 처리");
                 material.setMaterialType("text");
+                material.setContent(description);
             }
 
             System.out.println("DB 저장 시작");
@@ -634,36 +635,51 @@ public class TeacherController {
     @PostMapping("/api/teacher/materials/{id}/share")
     public ResponseEntity<Map<String, Object>> shareMaterial(@PathVariable Long id) {
         try {
+            System.out.println("=== 자료 공유 요청 ===");
+            System.out.println("Material ID: " + id);
+            
             TeacherMaterial material = teacherMaterialRepository.findById(id).orElse(null);
             if (material == null) {
+                System.out.println("자료를 찾을 수 없음: " + id);
                 Map<String, Object> response = new HashMap<>();
                 response.put("success", false);
                 response.put("message", "자료를 찾을 수 없습니다.");
                 return ResponseEntity.notFound().build();
             }
             
-            material.setIsShared(!material.getIsShared());
-            teacherMaterialRepository.save(material);
+            boolean previouslyShared = material.getIsShared() != null && material.getIsShared();
+            material.setIsShared(!previouslyShared);
+            
+            System.out.println("공유 상태 변경: " + previouslyShared + " -> " + material.getIsShared());
+            
+            TeacherMaterial saved = teacherMaterialRepository.save(material);
+            System.out.println("DB 저장 완료");
 
-            if (material.getIsShared()) {
+            if (saved.getIsShared()) {
                 Map<String, Object> materialData = new HashMap<>();
                 materialData.put("type", "NEW_MATERIAL");
-                materialData.put("title", material.getTitle());
-                materialData.put("content", material.getDescription());
-                materialData.put("materialType", material.getMaterialType());
+                materialData.put("title", saved.getTitle());
+                materialData.put("content", saved.getDescription());
+                materialData.put("materialType", saved.getMaterialType());
                 materialData.put("from", "teacher");
                 materialData.put("timestamp", LocalDateTime.now());
-                materialData.put("materialId", material.getId());
+                materialData.put("materialId", saved.getId());
+                
+                System.out.println("WebSocket 알림 전송 중...");
                 messagingTemplate.convertAndSend("/topic/teacher-announcements", materialData);
+                System.out.println("WebSocket 알림 전송 완료");
             }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
-            response.put("shared", material.getIsShared());
-            response.put("message", material.getIsShared() ? "학생들에게 공유되었습니다." : "공유가 중지되었습니다.");
+            response.put("shared", saved.getIsShared());
+            response.put("message", saved.getIsShared() ? "학생들에게 공유되었습니다." : "공유가 중지되었습니다.");
             
+            System.out.println("공유 응답: " + response);
             return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
+            System.out.println("공유 실패: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -721,7 +737,7 @@ public class TeacherController {
                 Map<String, Object> data = new HashMap<>();
                 data.put("id", material.getId());
                 data.put("title", material.getTitle());
-                data.put("content", material.getContent());
+                data.put("content", material.getContent() != null ? material.getContent() : material.getDescription());
                 data.put("description", material.getDescription());
                 data.put("materialType", material.getMaterialType());
                 data.put("fileName", material.getFileName());
@@ -750,16 +766,26 @@ public class TeacherController {
     @GetMapping("/api/teacher/materials/{id}/download")
     public ResponseEntity<Resource> downloadMaterial(@PathVariable Long id) {
         try {
+            System.out.println("=== 파일 다운로드 요청 ===");
+            System.out.println("Material ID: " + id);
+            
             Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
             if (!materialOpt.isPresent()) {
+                System.out.println("자료를 찾을 수 없음");
                 return ResponseEntity.notFound().build();
             }
             
             TeacherMaterial material = materialOpt.get();
+            System.out.println("자료 정보: " + material.getTitle());
+            System.out.println("파일명: " + material.getFileName());
+            System.out.println("파일 데이터 존재: " + (material.getFileData() != null));
             
             if (material.getFileData() == null || material.getFileData().length == 0) {
+                System.out.println("파일 데이터가 없음");
                 return ResponseEntity.notFound().build();
             }
+            
+            System.out.println("파일 크기: " + material.getFileData().length);
             
             ByteArrayResource resource = new ByteArrayResource(material.getFileData());
             
@@ -768,13 +794,17 @@ public class TeacherController {
                 filename = "material_" + id;
             }
             
+            System.out.println("다운로드 파일명: " + filename);
+            
             return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, 
                     "attachment; filename=\"" + filename + "\"")
                 .header(HttpHeaders.CONTENT_TYPE, material.getMaterialType())
+                .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(material.getFileData().length))
                 .body(resource);
                 
         } catch (Exception e) {
+            System.out.println("다운로드 실패: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -783,14 +813,24 @@ public class TeacherController {
     @GetMapping("/material-preview/{id}")
     public String viewMaterial(@PathVariable Long id, Model model) {
         try {
+            System.out.println("=== 자료 미리보기 요청 ===");
+            System.out.println("Material ID: " + id);
+            
             Optional<TeacherMaterial> materialOpt = teacherMaterialRepository.findById(id);
             if (!materialOpt.isPresent()) {
+                System.out.println("자료를 찾을 수 없음");
                 model.addAttribute("error", "자료를 찾을 수 없습니다.");
                 return "material-error";
             }
             
             TeacherMaterial material = materialOpt.get();
             String fileType = material.getMaterialType();
+            
+            System.out.println("자료 정보:");
+            System.out.println("- 제목: " + material.getTitle());
+            System.out.println("- 파일명: " + material.getFileName());
+            System.out.println("- 타입: " + fileType);
+            System.out.println("- 파일 데이터: " + (material.getFileData() != null ? material.getFileData().length + " bytes" : "없음"));
             
             if (fileType == null) {
                 fileType = "text/plain";
@@ -808,26 +848,31 @@ public class TeacherController {
                 if (fileType.startsWith("image/")) {
                     String dataUrl = "data:" + fileType + ";base64," + base64Data;
                     model.addAttribute("filePath", dataUrl);
+                    System.out.println("이미지 미리보기 준비 완료");
                 } else if (fileType.equals("application/pdf")) {
                     String dataUrl = "data:application/pdf;base64," + base64Data;
                     model.addAttribute("filePath", dataUrl);
+                    System.out.println("PDF 미리보기 준비 완료");
                 } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
                     String textContent = new String(material.getFileData());
                     model.addAttribute("textContent", textContent);
+                    System.out.println("텍스트 미리보기 준비 완료");
                 }
             } else {
-                String downloadPath = "/api/teacher/materials/" + id + "/download";
-                model.addAttribute("filePath", downloadPath);
-            }
-            
-            if (fileType.startsWith("image/")) {
-                return "material-preview-image";
-            } else if (fileType.equals("application/pdf")) {
-                return "material-preview-pdf";
-            } else if (fileType.startsWith("text/") || fileType.equals("application/json") || fileType.equals("text")) {
+                System.out.println("파일 데이터 없음, description 사용");
                 if (material.getDescription() != null && !material.getDescription().trim().isEmpty()) {
                     model.addAttribute("textContent", material.getDescription());
                 }
+            }
+            
+            if (fileType.startsWith("image/")) {
+                System.out.println("이미지 템플릿 반환");
+                return "material-preview-image";
+            } else if (fileType.equals("application/pdf")) {
+                System.out.println("PDF 템플릿 반환");
+                return "material-preview-pdf";
+            } else if (fileType.startsWith("text/") || fileType.equals("application/json") || fileType.equals("text")) {
+                System.out.println("텍스트 템플릿 반환");
                 return "material-preview-text";
             } else {
                 String extension = "";
@@ -835,10 +880,12 @@ public class TeacherController {
                     extension = material.getFileName().substring(material.getFileName().lastIndexOf(".") + 1);
                 }
                 model.addAttribute("fileExtension", extension.toUpperCase());
+                System.out.println("파일 템플릿 반환: " + extension);
                 return "material-preview-file";
             }
             
         } catch (Exception e) {
+            System.out.println("미리보기 실패: " + e.getMessage());
             e.printStackTrace();
             model.addAttribute("error", "미리보기 중 오류가 발생했습니다: " + e.getMessage());
             return "material-error";
