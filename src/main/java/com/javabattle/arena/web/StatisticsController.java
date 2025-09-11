@@ -343,4 +343,30 @@ public class StatisticsController {
             return ResponseEntity.status(500).build();
         }
     }
+    
+    @GetMapping("/api/test/users")
+    @ResponseBody
+    public ResponseEntity<String> testUsers() {
+        try {
+            long totalUsers = userRepository.count();
+            List<User> allUsers = userRepository.findAll();
+            List<User> students = userRepository.findByRole("STUDENT");
+            
+            StringBuilder result = new StringBuilder();
+            result.append("전체 사용자 수: ").append(totalUsers).append("\n");
+            result.append("전체 사용자: ");
+            for (User user : allUsers) {
+                result.append(user.getNickname()).append("(").append(user.getRole()).append(") ");
+            }
+            result.append("\n학생 수: ").append(students.size()).append("\n");
+            result.append("학생들: ");
+            for (User student : students) {
+                result.append(student.getNickname()).append(" ");
+            }
+            
+            return ResponseEntity.ok(result.toString());
+        } catch (Exception e) {
+            return ResponseEntity.ok("오류: " + e.getMessage());
+        }
+    }
 }
