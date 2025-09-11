@@ -26,7 +26,7 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     @Query("SELECT q.userId, COUNT(q) as total, SUM(q.isCorrect) as correct FROM QuizSubmission q GROUP BY q.userId")
     List<Object[]> getQuizStatsByUser();
 
-    @Query("SELECT AVG(q.score) FROM QuizSubmission q WHERE q.userId = :userId")
+    @Query("SELECT AVG(q.isCorrect) FROM QuizSubmission q WHERE q.userId = :userId")
     Double getAverageScoreByUserId(@Param("userId") Long userId);
     
     Long countByUserId(Long userId);
