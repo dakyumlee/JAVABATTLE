@@ -880,15 +880,15 @@ public class TeacherController {
                 model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
             }
             
-            if (fileType.startsWith("image/")) {
+            if (fileType.equals("text") || fileType.startsWith("text/") || fileType.equals("application/json")) {
+                System.out.println("텍스트 템플릿 반환");
+                return "material-preview-text";
+            } else if (fileType.startsWith("image/")) {
                 System.out.println("이미지 템플릿 반환");
                 return "material-preview-image";
             } else if (fileType.equals("application/pdf")) {
                 System.out.println("PDF 템플릿 반환");
                 return "material-preview-pdf";
-            } else if (fileType.startsWith("text/") || fileType.equals("application/json") || fileType.equals("text")) {
-                System.out.println("텍스트 템플릿 반환");
-                return "material-preview-text";
             } else {
                 String extension = "";
                 if (material.getFileName() != null && material.getFileName().contains(".")) {
