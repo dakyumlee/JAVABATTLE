@@ -640,12 +640,12 @@
             const token = getAuthToken();
             const userId = getCurrentUserId();
             
-            console.log('🔍 답안 조회 디버깅:');
+            console.log('📝 답안 조회 디버깅:');
             console.log('토큰:', token ? '있음 (' + token.substring(0, 20) + '...)' : '없음');
             console.log('사용자ID:', userId);
             
             if (!token || !userId) {
-                console.log('❌ 토큰 또는 사용자 ID가 없습니다');
+                console.log('⛔ 토큰 또는 사용자 ID가 없습니다');
                 renderMySubmissions();
                 return;
             }
@@ -670,11 +670,11 @@
                 renderMySubmissions();
             } else {
                 const errorText = await response.text();
-                console.error('❌ 답안 조회 실패:', response.status, errorText);
+                console.error('⛔ 답안 조회 실패:', response.status, errorText);
                 renderMySubmissions();
             }
         } catch (error) {
-            console.error('❌ 답안 조회 오류:', error);
+            console.error('⛔ 답안 조회 오류:', error);
             renderMySubmissions();
         }
     }
@@ -1062,17 +1062,10 @@
 
     function viewMaterial(materialId) {
         console.log('미리보기 클릭:', materialId);
-        try {
-            const newWindow = window.open(`/material-preview/${materialId}`, '_blank', 'noopener,noreferrer');
-            if (!newWindow) {
-                console.log('팝업 차단됨, 현재 탭에서 열기');
-                window.location.href = `/material-preview/${materialId}`;
-            } else {
-                console.log('새 창에서 미리보기 열림');
-            }
-        } catch (error) {
-            console.error('미리보기 열기 실패:', error);
-            window.location.href = `/material-preview/${materialId}`;
+        const newWindow = window.open(`/material-preview/${materialId}`, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+            console.log('팝업 차단됨, 현재 탭에서 열기');
+            window.open(`/material-preview/${materialId}`, '_self');
         }
     }
 

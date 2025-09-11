@@ -883,53 +883,39 @@ public class TeacherController {
             
             model.addAttribute("material", material);
             model.addAttribute("materialId", id);
-            model.addAttribute("title", material.getTitle());
-            model.addAttribute("fileName", material.getFileName());
-            model.addAttribute("fileType", fileType);
             
             if (material.getFileData() != null && material.getFileData().length > 0) {
-                String base64Data = Base64.getEncoder().encodeToString(material.getFileData());
-                
                 if (fileType.startsWith("image/")) {
+                    String base64Data = Base64.getEncoder().encodeToString(material.getFileData());
                     String dataUrl = "data:" + fileType + ";base64," + base64Data;
                     model.addAttribute("filePath", dataUrl);
                     System.out.println("이미지 미리보기 준비 완료");
+                    return "material-preview-image";
                 } else if (fileType.equals("application/pdf")) {
-                    String dataUrl = "data:application/pdf;base64," + base64Data;
-                    model.addAttribute("filePath", dataUrl);
+                    model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
                     System.out.println("PDF 미리보기 준비 완료");
-                } else if (fileType.startsWith("text/") || fileType.equals("application/json")) {
+                    return "material-preview-pdf";
+                } else if (fileType.startsWith("text/") || fileType.equals("application/json") || fileType.equals("text")) {
                     String textContent = new String(material.getFileData());
                     model.addAttribute("textContent", textContent);
                     System.out.println("텍스트 미리보기 준비 완료");
+                    return "material-preview-text";
                 }
             } else {
                 System.out.println("파일 데이터 없음, description 사용");
                 if (material.getDescription() != null && !material.getDescription().trim().isEmpty()) {
                     model.addAttribute("textContent", material.getDescription());
+                    return "material-preview-text";
                 }
-                model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
             }
             
-            if (fileType.equals("text") || fileType.startsWith("text/") || fileType.equals("application/json")) {
-                System.out.println("텍스트 템플릿 반환");
-                return "material-preview-text";
-            } else if (fileType.startsWith("image/")) {
-                System.out.println("이미지 템플릿 반환");
-                return "material-preview-image";
-            } else if (fileType.equals("application/pdf")) {
-                System.out.println("PDF 템플릿 반환");
-                return "material-preview-pdf";
-            } else {
-                String extension = "";
-                if (material.getFileName() != null && material.getFileName().contains(".")) {
-                    extension = material.getFileName().substring(material.getFileName().lastIndexOf(".") + 1);
-                }
-                model.addAttribute("fileExtension", extension.toUpperCase());
-                model.addAttribute("filePath", "/api/teacher/materials/" + id + "/download");
-                System.out.println("파일 템플릿 반환: " + extension);
-                return "material-preview-file";
+            String extension = "";
+            if (material.getFileName() != null && material.getFileName().contains(".")) {
+                extension = material.getFileName().substring(material.getFileName().lastIndexOf(".") + 1);
             }
+            model.addAttribute("fileExtension", extension.toUpperCase());
+            System.out.println("일반 파일 템플릿 반환: " + extension);
+            return "material-preview-file";
             
         } catch (Exception e) {
             System.out.println("미리보기 실패: " + e.getMessage());
@@ -938,7 +924,7 @@ public class TeacherController {
             return "material-error";
         }
     }
-
+    
     @GetMapping("/api/teacher/materials/{id}/view")
     @ResponseBody
     public ResponseEntity<String> viewMaterialRedirect(@PathVariable Long id) {
