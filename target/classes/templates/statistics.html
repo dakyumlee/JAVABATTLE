@@ -657,18 +657,18 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    charts.activity.data.labels = data.labels || ['문제 풀이', '강의 시청', '퀴즈 참여'];
-                    charts.activity.data.datasets[0].data = data.data || [45, 30, 25];
+                    charts.activity.data.labels = data.labels || [];
+                    charts.activity.data.datasets[0].data = data.data || [];
                     charts.activity.update();
                 } else {
-                    charts.activity.data.labels = ['문제 풀이', '강의 시청', '퀴즈 참여'];
-                    charts.activity.data.datasets[0].data = [45, 30, 25];
+                    charts.activity.data.labels = [];
+                    charts.activity.data.datasets[0].data = [];
                     charts.activity.update();
                 }
             } catch (error) {
                 console.error('Activity 차트 로딩 실패:', error);
-                charts.activity.data.labels = ['문제 풀이', '강의 시청', '퀴즈 참여'];
-                charts.activity.data.datasets[0].data = [45, 30, 25];
+                charts.activity.data.labels = [];
+                charts.activity.data.datasets[0].data = [];
                 charts.activity.update();
             }
         }
@@ -684,18 +684,18 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    charts.daily.data.labels = data.map ? data.map(item => item.date) : ['월', '화', '수', '목', '금', '토', '일'];
-                    charts.daily.data.datasets[0].data = data.map ? data.map(item => item.activeStudents) : [12, 19, 15, 25, 22, 18, 24];
+                    charts.daily.data.labels = data.map ? data.map(item => item.date) : [];
+                    charts.daily.data.datasets[0].data = data.map ? data.map(item => item.activeStudents) : [];
                     charts.daily.update();
                 } else {
-                    charts.daily.data.labels = ['월', '화', '수', '목', '금', '토', '일'];
-                    charts.daily.data.datasets[0].data = [12, 19, 15, 25, 22, 18, 24];
+                    charts.daily.data.labels = [];
+                    charts.daily.data.datasets[0].data = [];
                     charts.daily.update();
                 }
             } catch (error) {
                 console.error('Daily 차트 로딩 실패:', error);
-                charts.daily.data.labels = ['월', '화', '수', '목', '금', '토', '일'];
-                charts.daily.data.datasets[0].data = [12, 19, 15, 25, 22, 18, 24];
+                charts.daily.data.labels = [];
+                charts.daily.data.datasets[0].data = [];
                 charts.daily.update();
             }
         }
@@ -711,18 +711,18 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    charts.material.data.labels = data.map ? data.map(item => item.name).slice(0, 10) : ['Java 기초', '배열', '반복문', '조건문', '메서드'];
-                    charts.material.data.datasets[0].data = data.map ? data.map(item => item.accessCount).slice(0, 10) : [85, 67, 54, 43, 38];
+                    charts.material.data.labels = data.map ? data.map(item => item.name).slice(0, 10) : [];
+                    charts.material.data.datasets[0].data = data.map ? data.map(item => item.accessCount).slice(0, 10) : [];
                     charts.material.update();
                 } else {
-                    charts.material.data.labels = ['Java 기초', '배열', '반복문', '조건문', '메서드'];
-                    charts.material.data.datasets[0].data = [85, 67, 54, 43, 38];
+                    charts.material.data.labels = [];
+                    charts.material.data.datasets[0].data = [];
                     charts.material.update();
                 }
             } catch (error) {
                 console.error('Material 차트 로딩 실패:', error);
-                charts.material.data.labels = ['Java 기초', '배열', '반복문', '조건문', '메서드'];
-                charts.material.data.datasets[0].data = [85, 67, 54, 43, 38];
+                charts.material.data.labels = [];
+                charts.material.data.datasets[0].data = [];
                 charts.material.update();
             }
         }
@@ -746,47 +746,20 @@
                         charts.performance.update();
                         updateStudentsTable(data);
                     } else {
-                        const sampleData = [
-                            {nickname: '김학생', email: 'student1@test.com', problemsSolved: 15, quizzesCompleted: 8, averageScore: 85, lastActivity: new Date()},
-                            {nickname: '이학생', email: 'student2@test.com', problemsSolved: 12, quizzesCompleted: 6, averageScore: 78, lastActivity: new Date()},
-                            {nickname: '박학생', email: 'student3@test.com', problemsSolved: 18, quizzesCompleted: 10, averageScore: 92, lastActivity: new Date()}
-                        ];
-                        
-                        charts.performance.data.datasets[0].data = sampleData.map(student => ({
-                            x: student.problemsSolved,
-                            y: student.averageScore
-                        }));
+                        charts.performance.data.datasets[0].data = [];
                         charts.performance.update();
-                        updateStudentsTable(sampleData);
+                        updateStudentsTable([]);
                     }
                 } else {
-                    const sampleData = [
-                        {nickname: '김학생', email: 'student1@test.com', problemsSolved: 15, quizzesCompleted: 8, averageScore: 85, lastActivity: new Date()},
-                        {nickname: '이학생', email: 'student2@test.com', problemsSolved: 12, quizzesCompleted: 6, averageScore: 78, lastActivity: new Date()},
-                        {nickname: '박학생', email: 'student3@test.com', problemsSolved: 18, quizzesCompleted: 10, averageScore: 92, lastActivity: new Date()}
-                    ];
-                    
-                    charts.performance.data.datasets[0].data = sampleData.map(student => ({
-                        x: student.problemsSolved,
-                        y: student.averageScore
-                    }));
+                    charts.performance.data.datasets[0].data = [];
                     charts.performance.update();
-                    updateStudentsTable(sampleData);
+                    updateStudentsTable([]);
                 }
             } catch (error) {
                 console.error('Student performance 로딩 실패:', error);
-                const sampleData = [
-                    {nickname: '김학생', email: 'student1@test.com', problemsSolved: 15, quizzesCompleted: 8, averageScore: 85, lastActivity: new Date()},
-                    {nickname: '이학생', email: 'student2@test.com', problemsSolved: 12, quizzesCompleted: 6, averageScore: 78, lastActivity: new Date()},
-                    {nickname: '박학생', email: 'student3@test.com', problemsSolved: 18, quizzesCompleted: 10, averageScore: 92, lastActivity: new Date()}
-                ];
-                
-                charts.performance.data.datasets[0].data = sampleData.map(student => ({
-                    x: student.problemsSolved,
-                    y: student.averageScore
-                }));
+                charts.performance.data.datasets[0].data = [];
                 charts.performance.update();
-                updateStudentsTable(sampleData);
+                updateStudentsTable([]);
             }
         }
 
