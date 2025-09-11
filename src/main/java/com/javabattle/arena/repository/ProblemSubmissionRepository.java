@@ -4,7 +4,7 @@ import com.javabattle.arena.model.ProblemSubmission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -25,4 +25,10 @@ public interface ProblemSubmissionRepository extends JpaRepository<ProblemSubmis
     
     @Query("SELECT AVG(p.score) FROM ProblemSubmission p WHERE p.score IS NOT NULL")
     Double getAverageScore();
+
+    Long countBySubmittedAtAfter(LocalDateTime start);
+    
+    Long countBySubmittedAtBetween(LocalDateTime start, LocalDateTime end);
+    
+    Long countByUserIdAndIsCorrect(Long userId, Boolean isCorrect);
 }

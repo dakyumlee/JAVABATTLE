@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>복습 노트 - Java Battle Arena</title>
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .header {
+            background: #1a1a1a;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #3498db;
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .btn.secondary { background: #6c757d; }
+        .btn.danger { background: #dc3545; }
+        .btn:hover { opacity: 0.9; }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: white;
+            font-family: inherit;
+        }
+        
+        .category-filter select {
+            padding: 0.75rem;
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #95a5a6;
+        }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+        
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .note-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .note-card:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+        .note-card.favorite {
+            border-color: #f39c12;
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .note-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #3498db;
+            flex: 1;
+            cursor: pointer;
+        }
+        .note-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .note-action-btn {
+            background: none;
+            border: none;
+            color: #95a5a6;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .note-action-btn:hover { color: #3498db; background: #2d2d2d; }
+        .note-action-btn.favorite.active { color: #f39c12; }
+        
+        .note-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #95a5a6;
+        }
+        
+        .note-category {
+            background: #2d2d2d;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .note-content {
+            color: #e0e0e0;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .note-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: #2d2d2d;
+            color: #95a5a6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .add-note-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #333;
+        }
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #3498db;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #e0e0e0;
+        }
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2d2d2d;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: white;
+            font-family: inherit;
+        }
+        .form-textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #95a5a6;
+        }
+        .error, .success {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        .error { background: #dc3545; color: white; }
+        .success { background: #28a745; color: white; }
+        .close-btn {
+            float: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #95a5a6;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #fff; }
+        .detail-modal .modal-content { max-width: 800px; }
+        .detail-content { line-height: 1.6; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📝 복습 노트</div>
+        <div class="header-actions">
+            <a href="/study" class="btn secondary">← 학습하기</a>
+            <a href="/" class="btn secondary">홈으로</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="filters">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="제목, 내용, 태그로 검색...">
+            </div>
+            <div class="category-filter">
+                <select id="categoryFilter">
+                    <option value="">전체 카테고리</option>
+                </select>
+            </div>
+            <button class="btn" onclick="showFavorites()">즐겨찾기만</button>
+            <button class="btn secondary" onclick="showAll()">전체 보기</button>
+        </div>
+        
+        <div id="loadingState" class="loading">노트를 불러오는 중...</div>
+        <div id="errorState" class="error" style="display: none;">노트를 불러오는데 실패했습니다.</div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📝</div>
+            <h3>아직 작성된 노트가 없습니다</h3>
+            <p>아래 + 버튼을 눌러 첫 번째 노트를 작성해보세요!</p>
+        </div>
+        <div class="notes-grid" id="notesGrid" style="display: none;"></div>
+    </div>
+
+    <button class="add-note-btn" onclick="openNoteModal()">+</button>
+
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeNoteModal()">&times;</span>
+            <h2 class="modal-title" id="modalTitle">새 노트 작성</h2>
+            <form id="noteForm">
+                <input type="hidden" id="noteId" value="">
+                <div class="form-group">
+                    <label class="form-label">제목</label>
+                    <input type="text" id="noteTitle" class="form-input" placeholder="노트 제목을 입력하세요" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">카테고리</label>
+                    <input type="text" id="noteCategory" class="form-input" placeholder="카테고리 (예: Java, 알고리즘)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">내용</label>
+                    <textarea id="noteContent" class="form-textarea" placeholder="학습 내용을 정리해보세요..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">태그 (쉼표로 구분)</label>
+                    <input type="text" id="noteTags" class="form-input" placeholder="변수, 조건문, 반복문">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">난이도</label>
+                    <select id="noteDifficulty" class="form-select">
+                        <option value="">선택하지 않음</option>
+                        <option value="1">쉬움</option>
+                        <option value="2">보통</option>
+                        <option value="3">어려움</option>
+                        <option value="4">매우 어려움</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" onclick="closeNoteModal()">취소</button>
+                    <button type="submit" class="btn">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="noteDetailModal" class="modal detail-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDetailModal()">&times;</span>
+            <div id="noteDetailContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = 1;
+        let allNotes = [];
+        let categories = [];
+        let currentFilter = 'all';
+
+        async function loadNotes() {
+            try {
+                const response = await fetch(`/api/study-notes?userId=${currentUserId}`);
+                if (!response.ok) throw new Error('Failed to load notes');
+                
+                const data = await response.json();
+                if (data.success) {
+                    allNotes = data.notes;
+                    categories = data.categories || [];
+                    updateCategoryFilter();
+                    renderNotes(allNotes);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error('노트 로딩 오류:', error);
+                showError();
+            }
+        }
+
+        function updateCategoryFilter() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            categoryFilter.innerHTML = '<option value="">전체 카테고리</option>';
+            
+            const uniqueCategories = [...new Set(allNotes.map(note => note.category).filter(cat => cat))];
+            uniqueCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        function renderNotes(notes) {
+            const loadingState = document.getElementById('loadingState');
+            const errorState = document.getElementById('errorState');
+            const emptyState = document.getElementById('emptyState');
+            const notesGrid = document.getElementById('notesGrid');
+
+            loadingState.style.display = 'none';
+            errorState.style.display = 'none';
+
+            if (notes.length === 0) {
+                emptyState.style.display = 'block';
+                notesGrid.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            notesGrid.style.display = 'grid';
+            notesGrid.innerHTML = '';
+            
+            notes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = `note-card ${note.isFavorite ? 'favorite' : ''}`;
+                
+                const tags = note.tags ? note.tags.split(',').map(tag => tag.trim()) : [];
+                const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
+                const formattedDate = new Date(note.createdAt).toLocaleDateString('ko-KR');
+                const difficultyText = note.difficultyLevel ? ['', '쉬움', '보통', '어려움', '매우 어려움'][note.difficultyLevel] : '';
+                
+                card.innerHTML = `
+                    <div class="note-header">
+                        <div class="note-title" onclick="viewNote(${note.id})">${escapeHtml(note.title)}</div>
+                        <div class="note-actions">
+                            <button class="note-action-btn favorite ${note.isFavorite ? 'active' : ''}" 
+                                    onclick="toggleFavorite(${note.id})" title="즐겨찾기">⭐</button>
+                            <button class="note-action-btn" onclick="editNote(${note.id})" title="수정">✏️</button>
+                            <button class="note-action-btn" onclick="deleteNote(${note.id})" title="삭제">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="note-meta">
+                        <span>${formattedDate}</span>
+                        ${note.category ? `<span class="note-category">${escapeHtml(note.category)}</span>` : ''}
+                        ${difficultyText ? `<span class="note-category">${difficultyText}</span>` : ''}
+                    </div>
+                    <div class="note-content">${escapeHtml(note.content)}</div>
+                    <div class="note-tags">${tagsHtml}</div>
+                `;
+                
+                notesGrid.appendChild(card);
+            });
+        }
+
+        function showError() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('notesGrid').style.display = 'none';
+        }
+
+        function openNoteModal(note = null) {
+            const modal = document.getElementById('noteModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const noteForm = document.getElementById('noteForm');
+            
+            if (note) {
+                modalTitle.textContent = '노트 수정';
+                document.getElementById('noteId').value = note.id;
+                document.getElementById('noteTitle').value = note.title;
+                document.getElementById('noteCategory').value = note.category || '';
+                document.getElementById('noteContent').value = note.content;
+                document.getElementById('noteTags').value = note.tags || '';
+                document.getElementById('noteDifficulty').value = note.difficultyLevel || '';
+            } else {
+                modalTitle.textContent = '새 노트 작성';
+                noteForm.reset();
+                document.getElementById('noteId').value = '';
+            }
+            
+            modal.style.display = 'block';
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').style.display = 'none';
+        }
+
+        function viewNote(noteId) {
+            const note = allNotes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            const modal = document.getElementById('noteDetailModal');
+            const content = document.getElementById('noteDetailContent');
+            
+            const tags = note.tags ? note.tags.split(',').map(tag => tag.trim()) : [];
+            const tagsHtml = tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
+            const formattedDate = new Date(note.createdAt).toLocaleDateString('ko-KR');
+            const difficultyText = note.difficultyLevel ? ['', '쉬움', '보통', '어려움', '매우 어려움'][note.difficultyLevel] : '';
+            
+            content.innerHTML = `
+                <h2 class="note-title">${escapeHtml(note.title)}</h2>
+                <div class="note-meta" style="margin: 1rem 0;">
+                    <span>${formattedDate}</span>
+                    ${note.category ? `<span class="note-category">${escapeHtml(note.category)}</span>` : ''}
+                    ${difficultyText ? `<span class="note-category">${difficultyText}</span>` : ''}
+                </div>
+                <div class="note-tags" style="margin-bottom: 1rem;">${tagsHtml}</div>
+                <div class="detail-content">${escapeHtml(note.content)}</div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('noteDetailModal').style.display = 'none';
+        }
+
+        async function editNote(noteId) {
+            const note = allNotes.find(n => n.id === noteId);
+            if (note) {
+                openNoteModal(note);
+            }
+        }
+
+        async function deleteNote(noteId) {
+            if (!confirm('정말로 이 노트를 삭제하시겠습니까?')) return;
+
+            try {
+                const response = await fetch(`/api/study-notes/${noteId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadNotes();
+                } else {
+                    alert('노트 삭제에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('노트 삭제 오류:', error);
+                alert('노트 삭제에 실패했습니다.');
+            }
+        }
+
+        async function toggleFavorite(noteId) {
+            try {
+                const response = await fetch(`/api/study-notes/${noteId}/favorite`, { method: 'POST' });
+                if (response.ok) {
+                    loadNotes();
+                } else {
+                    alert('즐겨찾기 변경에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('즐겨찾기 토글 오류:', error);
+                alert('즐겨찾기 변경에 실패했습니다.');
+            }
+        }
+
+        async function showFavorites() {
+            try {
+                const response = await fetch(`/api/study-notes/favorites?userId=${currentUserId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        renderNotes(data.notes);
+                        currentFilter = 'favorites';
+                    }
+                }
+            } catch (error) {
+                console.error('즐겨찾기 조회 오류:', error);
+            }
+        }
+
+        function showAll() {
+            renderNotes(allNotes);
+            currentFilter = 'all';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('searchInput').value = '';
+        }
+
+        async function searchNotes(keyword) {
+            if (!keyword.trim()) {
+                renderNotes(allNotes);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/study-notes/search?userId=${currentUserId}&keyword=${encodeURIComponent(keyword)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        renderNotes(data.notes);
+                    }
+                }
+            } catch (error) {
+                console.error('검색 오류:', error);
+            }
+        }
+
+        async function filterByCategory(category) {
+            if (!category) {
+                renderNotes(allNotes);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/study-notes/category/${encodeURIComponent(category)}?userId=${currentUserId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        renderNotes(data.notes);
+                    }
+                }
+            } catch (error) {
+                console.error('카테고리 필터링 오류:', error);
+            }
+        }
+
+        document.getElementById('noteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const noteId = document.getElementById('noteId').value;
+            const title = document.getElementById('noteTitle').value.trim();
+            const category = document.getElementById('noteCategory').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            const tags = document.getElementById('noteTags').value.trim();
+            const difficultyLevel = document.getElementById('noteDifficulty').value;
+            
+            if (!title || !content) {
+                alert('제목과 내용을 입력해주세요.');
+                return;
+            }
+            
+            const noteData = {
+                userId: currentUserId,
+                title: title,
+                category: category,
+                content: content,
+                tags: tags,
+                difficultyLevel: difficultyLevel ? parseInt(difficultyLevel) : null
+            };
+
+            try {
+                let response;
+                if (noteId) {
+                    response = await fetch(`/api/study-notes/${noteId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(noteData)
+                    });
+                } else {
+                    response = await fetch('/api/study-notes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(noteData)
+                    });
+                }
+
+                if (response.ok) {
+                    closeNoteModal();
+                    loadNotes();
+                } else {
+                    alert('노트 저장에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('노트 저장 오류:', error);
+                alert('노트 저장에 실패했습니다.');
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            searchNotes(e.target.value);
+        });
+
+        document.getElementById('categoryFilter').addEventListener('change', function(e) {
+            filterByCategory(e.target.value);
+        });
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        window.onclick = function(event) {
+            const noteModal = document.getElementById('noteModal');
+            const detailModal = document.getElementById('noteDetailModal');
+            
+            if (event.target === noteModal) closeNoteModal();
+            if (event.target === detailModal) closeDetailModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotes();
+        });
+    </script>
+</body>
+</html>

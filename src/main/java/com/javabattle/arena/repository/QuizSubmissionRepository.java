@@ -3,8 +3,8 @@ package com.javabattle.arena.repository;
 import com.javabattle.arena.model.QuizSubmission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 
 @Repository
@@ -25,4 +25,9 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     
     @Query("SELECT q.userId, COUNT(q) as total, SUM(q.isCorrect) as correct FROM QuizSubmission q GROUP BY q.userId")
     List<Object[]> getQuizStatsByUser();
+
+    @Query("SELECT AVG(q.score) FROM QuizSubmission q WHERE q.userId = :userId")
+    Double getAverageScoreByUserId(@Param("userId") Long userId);
+    
+    Long countByUserId(Long userId);
 }
