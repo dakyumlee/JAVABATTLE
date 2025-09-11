@@ -218,7 +218,7 @@ public class StatisticsController {
             
             List<User> students = userRepository.findByRole("STUDENT");
             for (User student : students) {
-                Long problemsSolved = problemSubmissionRepository.countByUserIdAndIsCorrect(student.getId(), true);
+                Long problemsSolved = problemSubmissionRepository.countByUserIdAndScoreIsNotNull(student.getId());
                 Long quizzesCompleted = quizSubmissionRepository.countByUserId(student.getId());
                 Double avgScore = quizSubmissionRepository.getAverageScoreByUserId(student.getId());
                 LocalDateTime lastActivity = studentActivityRepository.findTopByStudentIdOrderByTimestampDesc(student.getId());
