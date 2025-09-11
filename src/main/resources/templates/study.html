@@ -1061,7 +1061,19 @@
     }
 
     function viewMaterial(materialId) {
-        window.open(`/material-preview/${materialId}`, '_blank');
+        console.log('미리보기 클릭:', materialId);
+        try {
+            const newWindow = window.open(`/material-preview/${materialId}`, '_blank', 'noopener,noreferrer');
+            if (!newWindow) {
+                console.log('팝업 차단됨, 현재 탭에서 열기');
+                window.location.href = `/material-preview/${materialId}`;
+            } else {
+                console.log('새 창에서 미리보기 열림');
+            }
+        } catch (error) {
+            console.error('미리보기 열기 실패:', error);
+            window.location.href = `/material-preview/${materialId}`;
+        }
     }
 
     function initializePage() {
