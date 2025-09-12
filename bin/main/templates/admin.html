@@ -697,27 +697,32 @@
 
         async function checkAdminAuth() {
             try {
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': 'Bearer ' + authToken,
-                        'Content-Type': 'application/json'
-                    }
-                });
+                currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                
+                if (!currentUser.role || currentUser.role !== 'ADMIN') {
+                    const response = await fetch('/api/auth/profile', {
+                        headers: {
+                            'Authorization': 'Bearer ' + authToken,
+                            'Content-Type': 'application/json'
+                        }
+                    });
 
-                if (response.ok) {
-                    currentUser = await response.json();
-                    if (currentUser.role !== 'ADMIN') {
-                        alert('관리자 권한이 필요합니다.');
-                        window.location.href = '/';
-                        return;
+                    if (response.ok) {
+                        currentUser = await response.json();
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     }
-                    document.getElementById('adminName').textContent = currentUser.nickname;
-                } else {
-                    throw new Error('Auth failed');
                 }
+                
+                if (currentUser.role !== 'ADMIN') {
+                    alert('관리자 권한이 필요합니다.');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('adminName').textContent = currentUser.nickname || '관리자';
             } catch (error) {
                 console.error('Admin auth check failed:', error);
-                alert('인증에 실패했습니다. 다시 로그인해주세요.');
+                alert('관리자 권한이 필요합니다.');
                 window.location.href = '/';
             }
         }
