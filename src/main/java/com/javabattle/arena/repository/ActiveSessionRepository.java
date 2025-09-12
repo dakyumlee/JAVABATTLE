@@ -47,4 +47,10 @@ public interface ActiveSessionRepository extends JpaRepository<ActiveSession, Lo
     @Transactional
     @Query("DELETE FROM ActiveSession a WHERE a.userId = :userId AND a.isActive = true")
     void deleteByUserIdAndIsActiveTrue(@Param("userId") Long userId);
+    
+    @Query("SELECT a FROM ActiveSession a WHERE a.isActive = true AND a.lastActivity > :timeThreshold ORDER BY a.lastActivity DESC")
+    List<ActiveSession> findByIsActiveTrueAndLastActivityAfter(@Param("timeThreshold") LocalDateTime timeThreshold);
+
+    @Query("SELECT COUNT(a) FROM ActiveSession a WHERE a.isActive = true AND a.lastActivity > :timeThreshold")
+    long countByIsActiveTrueAndLastActivityAfter(@Param("timeThreshold") LocalDateTime timeThreshold);
 }
