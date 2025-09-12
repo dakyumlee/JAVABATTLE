@@ -24,6 +24,7 @@ public class SessionService {
     
     public ActiveSession startSession(Long userId, String sessionId) {
         activeSessionRepository.deleteByUserIdAndIsActiveTrue(userId);
+        activeSessionRepository.flush();
         
         ActiveSession session = new ActiveSession(userId, sessionId);
         session.setCurrentPage("/");

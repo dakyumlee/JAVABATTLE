@@ -796,7 +796,7 @@
             <button class="btn-create" onclick="openCreateProblemModal()">📝 즉석 문제 출제</button>
             <button class="btn-create" onclick="openGlobalHintModal()">💡 전체 힌트</button>
             <button class="btn-create btn-quiz" onclick="openQuizModal()">⚡ 깜짝 퀴즈</button>
-            <button class="btn-create btn-notes" onclick="openNotesModal()">📝 강사 메모장</button>
+            <button class="btn-create btn-notes" onclick="openNotesModal()">📓 강사 메모장</button>
             <button class="btn-create btn-submissions" onclick="openSubmissionsModal()">📋 답안 조회</button>
         </div>
     </div>
@@ -937,7 +937,7 @@
     <div id="notesModal" class="modal notes-modal">
         <div class="modal-content">
             <div class="notes-header">
-                <div class="modal-header" style="margin-bottom: 0;">📝 강사 메모장</div>
+                <div class="modal-header" style="margin-bottom: 0;">📓 강사 메모장</div>
                 <button class="modal-btn modal-btn-primary" onclick="openCreateNoteModal()">새 메모 작성</button>
             </div>
             
@@ -1215,11 +1215,12 @@
     }
 
     function updateStudentActivity(activity) {
-        var existingIndex = studentsData.findIndex(function(s) { return s.id === activity.userId; });
+        var existingIndex = studentsData.findIndex(function(s) { return (s.userId || s.id) === activity.userId; });
         
         if (existingIndex >= 0) {
             studentsData[existingIndex] = {
-                id: studentsData[existingIndex].id,
+                id: activity.userId,
+                userId: activity.userId,
                 nickname: userNamesCache[activity.userId] || studentsData[existingIndex].nickname || getStudentName(activity.userId),
                 currentPage: activity.page,
                 isCoding: activity.isCoding,
@@ -1229,6 +1230,7 @@
         } else {
             studentsData.push({
                 id: activity.userId,
+                userId: activity.userId,
                 nickname: userNamesCache[activity.userId] || getStudentName(activity.userId),
                 currentPage: activity.page,
                 isCoding: activity.isCoding,
@@ -1242,7 +1244,7 @@
     }
 
     function removeStudent(userId) {
-        studentsData = studentsData.filter(function(s) { return s.id !== userId; });
+        studentsData = studentsData.filter(function(s) { return (s.userId || s.id) !== userId; });
         renderStudents();
         updateStats();
     }
@@ -1279,6 +1281,7 @@
                     studentsData = data.map(function(session) {
                         return {
                             id: session.userId,
+                            userId: session.userId,
                             nickname: session.nickname || userNamesCache[session.userId] || getStudentName(session.userId),
                             currentPage: session.currentPage || '/study',
                             isCoding: session.isCoding || false,
@@ -1301,16 +1304,19 @@
     function updateStats() {
         var uniqueStudents = {};
         studentsData.forEach(function(student) {
-            uniqueStudents[student.userId] = student;
+            var key = student.userId || student.id;
+            uniqueStudents[key] = student;
         });
         studentsData = Object.values(uniqueStudents);
         
         var totalStudents = studentsData.length;
         var now = new Date();
+        
         var activeStudents = studentsData.filter(function(s) { 
             var lastActivity = new Date(s.lastActivity);
             return (now - lastActivity) < 300000;
         }).length;
+        
         var codingStudents = studentsData.filter(function(s) { return s.isCoding; }).length;
         var avgCodeLength = totalStudents > 0 ? 
             Math.round(studentsData.reduce(function(sum, s) { return sum + (s.codeLength || 0); }, 0) / totalStudents) : 0;
@@ -1346,7 +1352,7 @@
                 statusText = '비활성';
             }
 
-            var displayName = student.nickname || userNamesCache[student.userId] || getStudentName(student.userId);
+            var displayName = student.nickname || userNamesCache[student.userId || student.id] || getStudentName(student.userId || student.id);
 
             return '<div class="student-card">' +
                 '<div class="student-header">' +
@@ -1362,8 +1368,8 @@
                     '<div class="last-activity">⏰ ' + formatTime(lastActivity) + '</div>' +
                 '</div>' +
                 '<div class="action-buttons">' +
-                    '<button class="btn btn-hint" onclick="openHintModal(\'' + student.userId + '\', \'' + displayName + '\')">💡 힌트</button>' +
-                    '<button class="btn btn-monitor" onclick="monitorStudent(\'' + student.userId + '\')">👁️ 모니터</button>' +
+                    '<button class="btn btn-hint" onclick="openHintModal(\'' + (student.userId || student.id) + '\', \'' + displayName + '\')">💡 힌트</button>' +
+                    '<button class="btn btn-monitor" onclick="monitorStudent(\'' + (student.userId || student.id) + '\')">👁️ 모니터</button>' +
                 '</div>' +
             '</div>';
         }).join('');
