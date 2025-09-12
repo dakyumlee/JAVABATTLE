@@ -24,6 +24,10 @@ public class Problem {
     @Column(name = "CATEGORY", length = 50)
     private String category;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "problem_type", length = 20)
+    private ProblemType problemType = ProblemType.CODING;
+
     @Column(name = "SAMPLE_INPUT", columnDefinition = "TEXT")
     private String sampleInput;
 
@@ -60,6 +64,9 @@ public class Problem {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+    public ProblemType getProblemType() { return problemType; }
+    public void setProblemType(ProblemType problemType) { this.problemType = problemType; }
 
     public String getSampleInput() { return sampleInput; }
     public void setSampleInput(String sampleInput) { this.sampleInput = sampleInput; }
