@@ -1015,6 +1015,81 @@
                sessionStorage.getItem('authToken');
     }
 
+    function loadActiveStudents() {
+        fetch('/api/teacher/active-students')
+            .then(response => response.json())
+            .then(data => {
+                const studentsContainer = document.getElementById('students-container');
+                
+                if (studentsContainer) {
+                    if (data.length > 0) {
+                        const html = data.map(student => {
+                            let status = '접속중';
+                            let statusClass = 'status-active';
+                            
+                            if (student.isCoding) {
+                                status = '코딩중';
+                                statusClass = 'status-coding';
+                            } else if (student.currentPage === '/solve' || student.currentPage === '/practice') {
+                                status = '학습중';
+                                statusClass = 'status-active';
+                            }
+                            
+                            return `
+                                <div class="student-card">
+                                    <div class="student-header">
+                                        <div class="student-name">${student.nickname}</div>
+                                        <div class="student-status">
+                                            <div class="status-dot ${statusClass}"></div>
+                                            <span class="status-text">${status}</span>
+                                        </div>
+                                    </div>
+                                    <div class="activity-info">
+                                        <div class="current-page">📄 ${student.currentPage}</div>
+                                        <div class="code-progress">💻 코드 길이: ${student.codeLength}자</div>
+                                        <div class="last-activity">⏰ ${new Date(student.lastActivity).toLocaleTimeString()}</div>
+                                    </div>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-hint" onclick="openHintModal('${student.userId}', '${student.nickname}')">💡 힌트</button>
+                                        <button class="btn btn-monitor" onclick="monitorStudent('${student.userId}')">👁️ 모니터</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        studentsContainer.innerHTML = html;
+                    } else {
+                        studentsContainer.innerHTML = '<div class="empty-state">현재 접속한 학생이 없습니다.</div>';
+                    }
+                }
+                
+                const activeCount = data.length;
+                const codingCount = data.filter(s => s.isCoding).length;
+                
+                ['active-students', 'total-students'].forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = activeCount;
+                    }
+                });
+                
+                const codingElement = document.getElementById('coding-students');
+                if (codingElement) {
+                    codingElement.textContent = codingCount;
+                }
+                
+                const avgElement = document.getElementById('avg-code-length');
+                if (avgElement && activeCount > 0) {
+                    const avgLength = Math.round(data.reduce((sum, s) => sum + (s.codeLength || 0), 0) / activeCount);
+                    avgElement.textContent = avgLength;
+                }
+                
+                console.log(`업데이트 완료 - 활성: ${activeCount}명, 코딩: ${codingCount}명`);
+            })
+            .catch(error => {
+                console.error('활성 학생 조회 실패:', error);
+            });
+    }
+
     function connect() {
         var socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
@@ -1095,13 +1170,13 @@
                         userNamesCache[user.id] = user.nickname || user.email || `사용자${user.id}`;
                     });
                     console.log('사용자 캐시 업데이트:', userNamesCache);
-                    renderStudents();
+                    loadActiveStudents();
                 } else if (Array.isArray(data)) {
                     data.forEach(function(user) {
                         userNamesCache[user.id] = user.nickname || user.email || `사용자${user.id}`;
                     });
                     console.log('사용자 캐시 업데이트:', userNamesCache);
-                    renderStudents();
+                    loadActiveStudents();
                 }
             })
             .catch(function(error) {
@@ -1239,14 +1314,12 @@
             });
         }
         
-        renderStudents();
-        updateStats();
+        loadActiveStudents();
     }
 
     function removeStudent(userId) {
         studentsData = studentsData.filter(function(s) { return (s.userId || s.id) !== userId; });
-        renderStudents();
-        updateStats();
+        loadActiveStudents();
     }
 
     function checkTeacherAuth() {
@@ -1259,120 +1332,8 @@
     }
 
     function refreshData() {
-        const token = getAuthToken();
-        if (!token) {
-            console.log('토큰이 없어서 데이터를 새로고침할 수 없습니다');
-            return;
-        }
-
-        fetch('/api/teacher/active-students', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(function(response) { 
-                console.log('활성 학생 API 응답:', response.status);
-                return response.json(); 
-            })
-            .then(function(data) {
-                console.log('받은 학생 데이터:', data);
-                if (Array.isArray(data)) {
-                    studentsData = data.map(function(session) {
-                        return {
-                            id: session.userId,
-                            userId: session.userId,
-                            nickname: session.nickname || userNamesCache[session.userId] || getStudentName(session.userId),
-                            currentPage: session.currentPage || '/study',
-                            isCoding: session.isCoding || false,
-                            codeLength: session.codeLength || 0,
-                            lastActivity: new Date(session.lastActivity || session.updatedAt || Date.now())
-                        };
-                    });
-                } else {
-                    studentsData = [];
-                }
-                updateStats();
-                renderStudents();
-                updateSubmissionsCount();
-            })
-            .catch(function(error) {
-                console.log('API 연결 대기 중...', error);
-            });
-    }
-
-    function updateStats() {
-        var uniqueStudents = {};
-        studentsData.forEach(function(student) {
-            var key = student.userId || student.id;
-            uniqueStudents[key] = student;
-        });
-        studentsData = Object.values(uniqueStudents);
-        
-        var totalStudents = studentsData.length;
-        var now = new Date();
-        
-        var activeStudents = studentsData.filter(function(s) { 
-            var lastActivity = new Date(s.lastActivity);
-            return (now - lastActivity) < 300000;
-        }).length;
-        
-        var codingStudents = studentsData.filter(function(s) { return s.isCoding; }).length;
-        var avgCodeLength = totalStudents > 0 ? 
-            Math.round(studentsData.reduce(function(sum, s) { return sum + (s.codeLength || 0); }, 0) / totalStudents) : 0;
-
-        document.getElementById('total-students').textContent = totalStudents;
-        document.getElementById('active-students').textContent = activeStudents;
-        document.getElementById('coding-students').textContent = codingStudents;
-        document.getElementById('avg-code-length').textContent = avgCodeLength;
-    }
-
-    function renderStudents() {
-        var container = document.getElementById('students-container');
-        
-        if (studentsData.length === 0) {
-            container.innerHTML = '<div class="empty-state">접속한 학생이 없습니다</div>';
-            return;
-        }
-
-        container.innerHTML = studentsData.map(function(student) {
-            var lastActivity = new Date(student.lastActivity);
-            var timeDiff = new Date() - lastActivity;
-            var isActive = timeDiff < 300000;
-            
-            var statusClass, statusText;
-            if (student.isCoding) {
-                statusClass = 'status-coding';
-                statusText = '코딩 중';
-            } else if (isActive) {
-                statusClass = 'status-active';
-                statusText = '활동 중';
-            } else {
-                statusClass = 'status-offline';
-                statusText = '비활성';
-            }
-
-            var displayName = student.nickname || userNamesCache[student.userId || student.id] || getStudentName(student.userId || student.id);
-
-            return '<div class="student-card">' +
-                '<div class="student-header">' +
-                    '<div class="student-name">' + displayName + '</div>' +
-                    '<div class="student-status">' +
-                        '<div class="status-dot ' + statusClass + '"></div>' +
-                        '<span class="status-text">' + statusText + '</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="activity-info">' +
-                    '<div class="current-page">📄 ' + (student.currentPage || '메인 페이지') + '</div>' +
-                    '<div class="code-progress">💻 코드 길이: ' + (student.codeLength || 0) + '자</div>' +
-                    '<div class="last-activity">⏰ ' + formatTime(lastActivity) + '</div>' +
-                '</div>' +
-                '<div class="action-buttons">' +
-                    '<button class="btn btn-hint" onclick="openHintModal(\'' + (student.userId || student.id) + '\', \'' + displayName + '\')">💡 힌트</button>' +
-                    '<button class="btn btn-monitor" onclick="monitorStudent(\'' + (student.userId || student.id) + '\')">👁️ 모니터</button>' +
-                '</div>' +
-            '</div>';
-        }).join('');
+        loadActiveStudents();
+        updateSubmissionsCount();
     }
 
     function formatTime(date) {
@@ -2067,8 +2028,8 @@
     checkTeacherAuth();
     loadUserNames();
     connect();
-    refreshData();
-    setInterval(refreshData, 10000);
+    loadActiveStudents();
+    setInterval(loadActiveStudents, 10000);
     setInterval(loadUserNames, 30000);
     </script>
 </body>
