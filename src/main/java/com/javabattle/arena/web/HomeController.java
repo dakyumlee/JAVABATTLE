@@ -65,11 +65,6 @@ public class HomeController {
         return "teacher";
     }
 
-    @GetMapping("/statistics")
-    public String statistics() {
-        return "statistics";
-    }
-
     @GetMapping("/teacher-stats")
     public String teacherStats() {
         return "statistics";
