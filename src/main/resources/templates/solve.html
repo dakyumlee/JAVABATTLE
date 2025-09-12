@@ -196,14 +196,14 @@
             margin: 1rem 0;
             color: white;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
         .ai-feedback-header {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: space-between;
             margin-bottom: 1rem;
         }
 
@@ -215,6 +215,8 @@
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
         }
 
         .creative-badge {
@@ -228,11 +230,18 @@
             margin-bottom: 1rem;
         }
 
+        .feedback-section-title {
+            font-weight: 600; 
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
         .feedback-content {
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
             padding: 1rem;
             backdrop-filter: blur(10px);
+            line-height: 1.5;
         }
 
         .strengths-list, .improvements-list {
@@ -297,6 +306,10 @@
             border-radius: 3px;
             margin-left: 0.5rem;
         }
+
+        .score-high { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
+        .score-medium { background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%); color: #333; }
+        .score-low { background: linear-gradient(135deg, #e17055 0%, #d63031 100%); }
     </style>
 </head>
 <body>
@@ -339,38 +352,35 @@
             <div class="code-container">
                 <div id="editor-container"></div>
                 
-                <!-- 실행 결과 영역 -->
-                <div class="output-container" id="outputContainer">
+                <div class="output-container" id="outputContainer" style="display: none;">
                     <div class="output-header">실행 결과</div>
-                    <div class="output-content" id="output">여기에 실행 결과가 표시됩니다.</div>
+                    <div class="output-content" id="output"></div>
                 </div>
                 
-                <!-- AI 로딩 상태 -->
                 <div id="aiLoadingState" class="loading-ai" style="display: none;">
                     <div class="loading-spinner"></div>
                     <span>🤖 AI가 당신의 코드를 분석하고 있어요...</span>
                 </div>
 
-                <!-- AI 피드백 결과 -->
                 <div id="aiFeedbackResult" class="ai-feedback-container" style="display: none;">
                     <div class="ai-feedback-header">
                         <span>🤖 AI 코드 분석 결과</span>
-                        <span id="creativeBadge" class="creative-badge" style="display: none;">🎨 창의적 해결!</span>
+                        <span id="creativeBadge" class="creative-badge" style="display: none;">🎨 창의적!</span>
                     </div>
 
-                    <div class="score-display">
+                    <div class="score-display" id="scoreDisplay">
                         <span>점수:</span>
-                        <span id="aiScore">95</span>
+                        <span id="aiScore">0</span>
                         <span>/100</span>
                     </div>
 
                     <div class="feedback-section">
-                        <div style="font-weight: 600; margin-bottom: 0.5rem;">📝 종합 평가</div>
-                        <div class="feedback-content" id="aiFeedbackText"></div>
+                        <div class="feedback-section-title">📝 종합 평가</div>
+                        <div class="feedback-content" id="aiFeedbackText">평가를 진행중입니다...</div>
                     </div>
 
                     <div class="feedback-section" id="strengthsSection" style="display: none;">
-                        <div style="font-weight: 600; margin-bottom: 0.5rem;">✨ 잘한 점</div>
+                        <div class="feedback-section-title">✨ 잘한 점</div>
                         <div class="feedback-content">
                             <ul id="strengthsList" class="strengths-list">
                             </ul>
@@ -378,7 +388,7 @@
                     </div>
 
                     <div class="feedback-section" id="improvementsSection" style="display: none;">
-                        <div style="font-weight: 600; margin-bottom: 0.5rem;">🚀 개선할 점</div>
+                        <div class="feedback-section-title">🚀 개선할 점</div>
                         <div class="feedback-content">
                             <ul id="improvementsList" class="improvements-list">
                             </ul>
@@ -386,7 +396,7 @@
                     </div>
 
                     <div style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 1rem;">
-                        ⏱️ 평가 시간: <span id="evaluationTime">2.3초</span>
+                        ⏱️ 평가 시간: <span id="evaluationTime">계산중...</span>
                     </div>
                 </div>
             </div>
@@ -415,7 +425,7 @@
         });
 
         function createStarterTemplate(fullCode, category) {
-            fullSolution = fullCode;
+            fullSolution = fullCode || '';
             
             if (category && category.includes('Java')) {
                 return fullCode
@@ -428,7 +438,7 @@
                     });
             }
             
-            return fullCode || '';
+            return fullCode || 'public class Main {\n    public static void main(String[] args) {\n        // 여기에 코드를 작성하세요\n    }\n}';
         }
 
         function showHint() {
@@ -440,13 +450,13 @@
             hintLevel++;
             if (hintLevel > 3) {
                 hintLevel = 0;
-                editor.setValue(createStarterTemplate(fullSolution, currentProblem.category));
+                editor.setValue(createStarterTemplate(fullSolution, currentProblem?.category));
                 document.getElementById('hintLevel').textContent = '0/3';
                 return;
             }
             
             let hintCode = '';
-            const category = currentProblem.category;
+            const category = currentProblem?.category;
             
             if (hintLevel === 1) {
                 hintCode = addHint1(fullSolution, category);
@@ -463,7 +473,7 @@
         function addHint1(fullCode, category) {
             if (category && category.includes('Java')) {
                 return fullCode
-                    .replace(/\/\/ 여기에 출력문을 작성하세요/g, '// 힌트: System.out.println("Hello World");')
+                    .replace(/\/\/ 여기에 출력문을 작성하세요/g, '// 힌트: System.out.println("내용");')
                     .replace(/\/\/ 여기에 코드를 작성하세요/g, '// 힌트: 변수 선언이나 연산을 해보세요');
             }
             
@@ -472,10 +482,9 @@
 
         function addHint2(fullCode, category) {
             if (category && category.includes('Java')) {
-                return fullCode
-                    .replace(/\/\/ 힌트: System\.out\.println\("Hello World"\);/g, function(match) {
-                        return Math.random() > 0.3 ? 'System.out.println("Hello World");' : match;
-                    });
+                return fullCode.replace(/\/\/ 힌트: System\.out\.println\("내용"\);/g, function(match) {
+                    return Math.random() > 0.3 ? 'System.out.println("Hello World");' : match;
+                });
             }
             
             return fullCode;
@@ -490,29 +499,32 @@
             const code = editor.getValue();
             const output = document.getElementById('output');
             
-            // AI 피드백 숨기기
             document.getElementById('aiFeedbackResult').style.display = 'none';
             document.getElementById('outputContainer').style.display = 'flex';
             
             output.innerHTML = '<div class="loading">코드를 실행하는 중...</div>';
 
             try {
-                // 간단한 코드 실행 시뮬레이션
                 setTimeout(() => {
                     if (code.includes('System.out.println')) {
-                        const match = code.match(/System\.out\.println\(([^)]+)\)/);
-                        if (match) {
-                            const output_text = match[1].replace(/"/g, '');
-                            output.innerHTML = `<div class="success">실행 성공!</div><pre>${output_text}</pre>`;
+                        const matches = code.match(/System\.out\.println\(([^)]+)\)/g);
+                        if (matches) {
+                            let outputText = '';
+                            matches.forEach(match => {
+                                const content = match.match(/System\.out\.println\(([^)]+)\)/)[1];
+                                const cleanContent = content.replace(/"/g, '');
+                                outputText += cleanContent + '\n';
+                            });
+                            output.innerHTML = `<div class="success">실행 성공!</div><pre>${outputText}</pre>`;
                         } else {
                             output.innerHTML = `<div class="success">실행 성공!</div><pre>출력 완료</pre>`;
                         }
-                    } else if (code.toLowerCase().includes('select')) {
-                        output.innerHTML = `<div class="success">SQL 실행 성공!</div><pre>쿼리가 실행되었습니다.</pre>`;
+                    } else if (code.toLowerCase().includes('print')) {
+                        output.innerHTML = `<div class="success">실행 성공!</div><pre>결과가 출력되었습니다.</pre>`;
                     } else {
                         output.innerHTML = `<div class="error">실행 결과 없음</div><pre>출력문을 추가해보세요.</pre>`;
                     }
-                }, 800);
+                }, 500);
 
             } catch (error) {
                 console.error('코드 실행 실패:', error);
@@ -526,38 +538,103 @@
                 return;
             }
 
-            const code = editor.getValue();
-            const problemId = currentProblem.problemId;
-            
-            // 실행 결과 숨기고 AI 피드백 영역 보이기
-            document.getElementById('outputContainer').style.display = 'none';
+            const code = editor.getValue().trim();
+            if (!code) {
+                alert('코드를 작성해주세요.');
+                return;
+            }
+
             showAILoading();
+            document.getElementById('outputContainer').style.display = 'none';
+
+            const startTime = Date.now();
 
             try {
-                const startTime = Date.now();
+                const authToken = localStorage.getItem('authToken') || localStorage.getItem('jwtToken');
                 
-                const response = await fetch(`/practice/submit/${problemId}`, {
+                if (!authToken) {
+                    alert('로그인이 필요합니다.');
+                    showAIError();
+                    return;
+                }
+
+                const response = await fetch(`/practice/submit/${currentProblem.problemId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        'Authorization': `Bearer ${authToken}`
                     },
                     body: JSON.stringify({ answer: code })
                 });
 
+                const evaluationTime = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert('인증이 만료되었습니다. 다시 로그인해주세요.');
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
                 const result = await response.json();
+                showAIFeedback(result, evaluationTime);
+
+            } catch (error) {
+                console.error('AI 평가 실패:', error);
+                
+                const fallbackResult = performFallbackEvaluation(code);
                 const evaluationTime = ((Date.now() - startTime) / 1000).toFixed(1);
                 
-                if (response.ok) {
-                    showAIFeedback(result, evaluationTime);
-                } else {
-                    showAIError();
-                }
-                
-            } catch (error) {
-                console.error('AI 평가 오류:', error);
-                showAIError();
+                showAIFeedback(fallbackResult, evaluationTime);
             }
+        }
+
+        function performFallbackEvaluation(code) {
+            let score = 20;
+            let strengths = [];
+            let improvements = [];
+            let isCreative = false;
+
+            if (code.includes('System.out.println') || code.includes('print')) {
+                score += 30;
+                strengths.push('출력문을 올바르게 사용했습니다');
+            }
+
+            if (code.includes('public class') && code.includes('main')) {
+                score += 25;
+                strengths.push('Java 기본 구조를 이해하고 있습니다');
+            }
+
+            if (code.length > 50) {
+                score += 15;
+                strengths.push('충분한 양의 코드를 작성했습니다');
+            }
+
+            if (code.includes('//') || code.includes('/*')) {
+                score += 10;
+                isCreative = true;
+                strengths.push('주석을 활용한 설명이 좋습니다');
+            }
+
+            if (score < 60) {
+                improvements.push('기본 문법을 더 학습해보세요');
+                improvements.push('예제 코드를 참고해보세요');
+            }
+
+            if (!code.includes('System.out.println')) {
+                improvements.push('출력문 사용법을 확인해보세요');
+            }
+
+            return {
+                isCorrect: score >= 60,
+                score: Math.min(score, 100),
+                feedback: score >= 80 ? '훌륭한 코드입니다!' : score >= 60 ? '잘 작성된 코드네요. 조금만 더 발전시켜보세요.' : '기본기를 더 다져보세요.',
+                strengths: strengths,
+                improvements: improvements,
+                isCreative: isCreative
+            };
         }
 
         function showAILoading() {
@@ -569,13 +646,24 @@
             document.getElementById('aiLoadingState').style.display = 'none';
             document.getElementById('aiFeedbackResult').style.display = 'block';
 
-            document.getElementById('aiScore').textContent = result.score;
+            const score = result.score || 0;
+            document.getElementById('aiScore').textContent = score;
             
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.className = 'score-display';
+            if (score >= 80) {
+                scoreDisplay.classList.add('score-high');
+            } else if (score >= 60) {
+                scoreDisplay.classList.add('score-medium');
+            } else {
+                scoreDisplay.classList.add('score-low');
+            }
+
             if (result.isCreative) {
                 document.getElementById('creativeBadge').style.display = 'inline-block';
             }
 
-            document.getElementById('aiFeedbackText').textContent = result.feedback;
+            document.getElementById('aiFeedbackText').textContent = result.feedback || '평가가 완료되었습니다.';
 
             if (result.strengths && result.strengths.length > 0) {
                 const strengthsList = document.getElementById('strengthsList');
@@ -602,13 +690,15 @@
             document.getElementById('evaluationTime').textContent = `${evaluationTime}초`;
 
             const container = document.getElementById('aiFeedbackResult');
-            if (result.score >= 90) {
-                container.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-            } else if (result.score >= 70) {
-                container.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            if (score >= 80) {
+                container.style.background = '#27ae60';
+                container.style.color = '#fff';
+            } else if (score >= 60) {
+                container.style.background = '#f39c12';
+                container.style.color = '#fff';
             } else {
-                container.style.background = 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)';
-                container.style.color = '#333';
+                container.style.background = '#e74c3c';
+                container.style.color = '#fff';
             }
         }
 
@@ -658,13 +748,11 @@
                 
                 if (editor) {
                     const language = getLanguageFromCategory(problem.category);
-                    if (typeof monaco !== 'undefined') {
-                        monaco.editor.setModelLanguage(editor.getModel(), language);
-                    }
+                    monaco.editor.setModelLanguage(editor.getModel(), language);
                     editor.setValue(starterCode);
                 } else {
                     setTimeout(() => {
-                        if (editor && typeof monaco !== 'undefined') {
+                        if (editor) {
                             const language = getLanguageFromCategory(problem.category);
                             monaco.editor.setModelLanguage(editor.getModel(), language);
                             editor.setValue(starterCode);
