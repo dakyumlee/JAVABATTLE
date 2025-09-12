@@ -1275,16 +1275,20 @@
             })
             .then(function(data) {
                 console.log('받은 학생 데이터:', data);
-                studentsData = data.map(function(session) {
-                    return {
-                        id: session.userId,
-                        nickname: userNamesCache[session.userId] || getStudentName(session.userId),
-                        currentPage: session.currentPage || '/study',
-                        isCoding: session.isCoding || false,
-                        codeLength: session.codeLength || 0,
-                        lastActivity: new Date(session.lastActivity || session.updatedAt || Date.now())
-                    };
-                });
+                if (Array.isArray(data)) {
+                    studentsData = data.map(function(session) {
+                        return {
+                            id: session.userId,
+                            nickname: session.nickname || userNamesCache[session.userId] || getStudentName(session.userId),
+                            currentPage: session.currentPage || '/study',
+                            isCoding: session.isCoding || false,
+                            codeLength: session.codeLength || 0,
+                            lastActivity: new Date(session.lastActivity || session.updatedAt || Date.now())
+                        };
+                    });
+                } else {
+                    studentsData = [];
+                }
                 updateStats();
                 renderStudents();
                 updateSubmissionsCount();
@@ -1295,6 +1299,12 @@
     }
 
     function updateStats() {
+        var uniqueStudents = {};
+        studentsData.forEach(function(student) {
+            uniqueStudents[student.userId] = student;
+        });
+        studentsData = Object.values(uniqueStudents);
+        
         var totalStudents = studentsData.length;
         var now = new Date();
         var activeStudents = studentsData.filter(function(s) { 
@@ -1331,17 +1341,16 @@
             } else if (isActive) {
                 statusClass = 'status-active';
                 statusText = '활동 중';
-            } else if (timeDiff < 600000) {
-                statusClass = 'status-idle';
-                statusText = '대기 중';
             } else {
                 statusClass = 'status-offline';
                 statusText = '비활성';
             }
 
+            var displayName = student.nickname || userNamesCache[student.userId] || getStudentName(student.userId);
+
             return '<div class="student-card">' +
                 '<div class="student-header">' +
-                    '<div class="student-name">' + student.nickname + '</div>' +
+                    '<div class="student-name">' + displayName + '</div>' +
                     '<div class="student-status">' +
                         '<div class="status-dot ' + statusClass + '"></div>' +
                         '<span class="status-text">' + statusText + '</span>' +
@@ -1353,8 +1362,8 @@
                     '<div class="last-activity">⏰ ' + formatTime(lastActivity) + '</div>' +
                 '</div>' +
                 '<div class="action-buttons">' +
-                    '<button class="btn btn-hint" onclick="openHintModal(\'' + student.id + '\', \'' + student.nickname + '\')">💡 힌트</button>' +
-                    '<button class="btn btn-monitor" onclick="monitorStudent(\'' + student.id + '\')">👁️ 모니터</button>' +
+                    '<button class="btn btn-hint" onclick="openHintModal(\'' + student.userId + '\', \'' + displayName + '\')">💡 힌트</button>' +
+                    '<button class="btn btn-monitor" onclick="monitorStudent(\'' + student.userId + '\')">👁️ 모니터</button>' +
                 '</div>' +
             '</div>';
         }).join('');

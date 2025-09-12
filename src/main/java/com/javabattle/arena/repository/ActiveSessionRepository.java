@@ -42,4 +42,8 @@ public interface ActiveSessionRepository extends JpaRepository<ActiveSession, Lo
     
     @Query("SELECT a FROM ActiveSession a WHERE a.userId = :userId ORDER BY a.lastActivity DESC")
     List<ActiveSession> findByUserId(@Param("userId") Long userId);
+    
+    @Modifying
+    @Query("DELETE FROM ActiveSession a WHERE a.userId = :userId AND a.isActive = true")
+    void deleteByUserIdAndIsActiveTrue(@Param("userId") Long userId);
 }

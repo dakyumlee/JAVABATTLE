@@ -23,7 +23,7 @@ public class SessionService {
     private SimpMessagingTemplate messagingTemplate;
     
     public ActiveSession startSession(Long userId, String sessionId) {
-        deactivateUserSessions(userId);
+        activeSessionRepository.deleteByUserIdAndIsActiveTrue(userId);
         
         ActiveSession session = new ActiveSession(userId, sessionId);
         session.setCurrentPage("/");
@@ -39,7 +39,7 @@ public class SessionService {
             ActiveSession session = sessionOpt.get();
             session.setLastActivity(LocalDateTime.now());
             session.setCurrentPage(page);
-            if (code != null && code.length() < 1000) {
+            if (code != null && code.length() < 500) {
                 session.setCurrentCode(code);
             }
             session.setIsCoding(isCoding != null ? isCoding : false);
@@ -47,7 +47,7 @@ public class SessionService {
             
             sendActivityUpdate(session);
         } else {
-            startSession(userId, "auto-" + System.currentTimeMillis());
+            System.out.println("활성 세션이 없음: " + userId);
         }
     }
     

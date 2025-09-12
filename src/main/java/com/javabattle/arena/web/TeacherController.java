@@ -83,6 +83,22 @@ public class TeacherController {
                     studentData.put("isCoding", session.getIsCoding());
                     studentData.put("codeLength", session.getCurrentCode() != null ? session.getCurrentCode().length() : 0);
                     studentData.put("startTime", session.getStartTime());
+                    
+                    try {
+                        Optional<User> userOpt = userRepository.findById(session.getUserId());
+                        if (userOpt.isPresent()) {
+                            User user = userOpt.get();
+                            studentData.put("nickname", user.getNickname());
+                            studentData.put("email", user.getEmail());
+                        } else {
+                            studentData.put("nickname", "학생" + session.getUserId());
+                            studentData.put("email", "unknown@test.com");
+                        }
+                    } catch (Exception e) {
+                        studentData.put("nickname", "학생" + session.getUserId());
+                        studentData.put("email", "unknown@test.com");
+                    }
+                    
                     return studentData;
                 }).collect(Collectors.toList());
             
