@@ -442,6 +442,16 @@
         }
 
         function showHint() {
+            if (!currentProblem) {
+                alert('문제를 먼저 로드해주세요.');
+                return;
+            }
+
+            if (currentProblem.type === 'MULTIPLE_CHOICE' || currentProblem.problemType === 'MULTIPLE_CHOICE') {
+                alert('객관식 문제는 힌트를 제공하지 않습니다.');
+                return;
+            }
+            
             if (!fullSolution) {
                 alert('힌트를 사용할 수 없습니다.');
                 return;
@@ -468,6 +478,43 @@
             
             editor.setValue(hintCode);
             document.getElementById('hintLevel').textContent = `${hintLevel}/3`;
+        }
+
+        function selectChoice(index) {
+            document.querySelectorAll('.choice-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            const choiceElement = document.querySelector(`#choice${index}`).parentElement;
+            choiceElement.classList.add('selected');
+            
+            const radioButton = document.querySelector(`#choice${index}`);
+            radioButton.checked = true;
+        }
+
+        function submitMultipleChoice() {
+            const selectedChoice = document.querySelector('input[name="answer"]:checked');
+            
+            if (!selectedChoice) {
+                alert('답을 선택해주세요.');
+                return;
+            }
+
+            const selectedIndex = parseInt(selectedChoice.value);
+            const isCorrect = selectedIndex === (currentProblem.correctAnswer || 0);
+            
+            const feedbackElement = document.getElementById('aiFeedbackResult');
+            const feedbackText = document.getElementById('mcFeedbackText');
+            
+            if (isCorrect) {
+                feedbackElement.style.background = '#27ae60';
+                feedbackText.textContent = '정답입니다! 잘하셨습니다.';
+            } else {
+                feedbackElement.style.background = '#e74c3c';
+                feedbackText.textContent = `틀렸습니다. 정답은 ${currentProblem.correctAnswer + 1}번입니다.`;
+            }
+            
+            feedbackElement.style.display = 'block';
         }
 
         function addHint1(fullCode, category) {
