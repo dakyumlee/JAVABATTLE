@@ -5,7 +5,6 @@ com/javabattle/arena/repository/QuickProblemRepository.class
 com/javabattle/arena/web/StudentController.class
 com/javabattle/arena/JavaBattleArenaApplication.class
 com/javabattle/arena/web/AIBattleController.class
-com/javabattle/arena/service/SessionService$ActivityUpdate.class
 com/javabattle/arena/service/AIBattleService$AIGeneratedProblem.class
 com/javabattle/arena/repository/UserRepository.class
 com/javabattle/arena/web/CodeExecutionController.class
@@ -40,7 +39,6 @@ com/javabattle/arena/repository/TeacherNoteRepository.class
 com/javabattle/arena/repository/StudyNoteRepository.class
 com/javabattle/arena/web/PracticeController.class
 com/javabattle/arena/service/CategoryService.class
-com/javabattle/arena/service/SessionService$SessionEndNotification.class
 com/javabattle/arena/repository/ActiveSessionRepository.class
 com/javabattle/arena/config/JwtUtil$UserInfo.class
 com/javabattle/arena/web/HomeController$GameRoom.class

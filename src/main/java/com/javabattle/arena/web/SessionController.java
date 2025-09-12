@@ -8,8 +8,6 @@ import com.javabattle.arena.repository.QuizSubmissionRepository;
 import com.javabattle.arena.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -73,31 +71,6 @@ public class SessionController {
             response.put("success", false);
             response.put("message", "Failed to start session: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
-        }
-    }
-    
-    @MessageMapping("/student/activity")
-    public void handleStudentActivity(@Payload Map<String, Object> payload) {
-        try {
-            System.out.println("=== WebSocket 활동 메시지 수신 ===");
-            System.out.println("페이로드: " + payload);
-            
-            Long userId = Long.valueOf(payload.get("userId").toString());
-            String page = (String) payload.get("page");
-            String code = (String) payload.get("code");
-            Boolean isCoding = (Boolean) payload.get("isCoding");
-            
-            System.out.println("사용자 " + userId + " 활동: " + page + " (코딩: " + isCoding + ")");
-            
-            if (code != null && code.length() > 100) {
-                code = code.substring(0, 100);
-            }
-            
-            sessionService.updateActivity(userId, page, code, isCoding);
-            
-        } catch (Exception e) {
-            System.err.println("WebSocket 활동 처리 중 오류: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     

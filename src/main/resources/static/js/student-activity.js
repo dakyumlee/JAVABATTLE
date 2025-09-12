@@ -11,6 +11,81 @@ function getUserIdFromToken() {
     console.log('토큰 확인:', token);
     
     if (!token) {
+        console.log('토큰이 없음 - 기본값 1 사용');
+        return 1;
+    }
+    
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('토큰 페이로드:', payload);
+        return payload.userId || payload.sub || payload.id || 1;
+    } catch (e) {
+        console.error('토큰 파싱 실패:', e);
+        return 1;
+    }
+}
+
+function initializeWebSocket() {
+    userId = getUserIdFromToken() || 1;
+    console.log('=== WebSocket 초기화 ===');
+    console.log('사용자 ID:', userId);
+    
+    connectWebSocket();
+    startSession();
+    startActivityTracking();
+}
+
+function connectWebSocket() {
+    if (reconnectAttempts >= maxReconnectAttempts) {
+        console.log('최대 재연결 시도 횟수 초과. 폴링 모드로 전환.');
+        startPollingMode();
+        return;
+    }
+    
+    console.log('WebSocket 연결 시도... (시도 횟수:', reconnectAttempts + 1, ')');
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    
+    stompClient.heartbeat.outgoing = 20000;
+    stompClient.heartbeat.incoming = 20000;
+    
+    stompClient.connect({}, function(frame) {
+        console.log('✅ WebSocket 연결 성공:', frame);
+        isConnected = true;
+        reconnectAttempts = 0;
+        
+        stompClient.subscribe('/user/queue/hints', function(message) {
+            console.log('💡 개인 힌트 수신:', message.body);
+            const hintData = JSON.parse(message.body);
+            showHint(hintData.message);
+        });
+        
+        stompClient.subscribe('/topic/global-hints', function(message) {
+            console.log('📢 전체 힌트 수신:', message.body);
+            const hintData = JSON.parse(message.body);
+            showGlobalHint(hintData.message);
+        });
+        
+        stompClient.subscribe('/topic/teacher-hints', function(message) {
+            console.log('🎯 Fallback 힌트 수신:', message.body);
+            const hintData = JSON.parse(message.body);
+            if (hintData.targetUserId && hintData.targetUserId == userId) {
+                console.log('내게 온 힌트:', hintData.message);
+                showHint(hintData.message);
+            }
+        });
+        
+        stompClient.subscribe('/topic/teacher-announcements', function(message) {
+            console.log('📝 공지 수신:', message.body);
+            const announcementData = JSON.parse(message.body);
+            showAnnouncement(announcementData);
+        });
+        
+        stompClient.subscribe('/topic/quiz-broadcast', function(message) {
+            console.log('⚡ 퀴즈 수신:', message.body);
+            const quizData = JSON.parse(message.body);
+            showQuiz(quizData);
+        });
         
     }, function(error) {
         console.error('❌ WebSocket 연결 실패:', error);
@@ -121,13 +196,51 @@ function sendActivityUpdate() {
             console.log('✅ WebSocket 활동 업데이트 전송 성공');
         } catch (error) {
             console.error('❌ WebSocket 활동 업데이트 전송 실패:', error);
+            sendRestActivityUpdate();
         }
     } else {
-        console.log('WebSocket 재연결 필요');
-        if (reconnectAttempts < maxReconnectAttempts) {
-            connectWebSocket();
+        console.log('WebSocket이 연결되지 않음. REST API로 대체');
+        sendRestActivityUpdate();
+    }
+}
+
+function sendRestActivityUpdate() {
+    if (!userId) return;
+    
+    const currentPage = window.location.pathname;
+    const codeEditor = document.getElementById('codeEditor') || document.getElementById('editor-container');
+    let currentCode = '';
+    let isCoding = false;
+    
+    if (codeEditor) {
+        if (typeof editor !== 'undefined' && editor) {
+            currentCode = editor.getValue();
+            isCoding = currentCode.length > 10;
+        } else if (codeEditor.value) {
+            currentCode = codeEditor.value;
+            isCoding = currentCode.length > 10;
         }
     }
+    
+    fetch('/api/session/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            userId: userId,
+            page: currentPage,
+            code: currentCode.length > 500 ? currentCode.substring(0, 500) : currentCode,
+            isCoding: isCoding
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('✅ REST 활동 업데이트 전송 성공:', data);
+    })
+    .catch(error => {
+        console.error('❌ REST 활동 업데이트 실패:', error);
+    });
 }
 
 function endSession() {
@@ -882,282 +995,4 @@ function submitQuizAnswer() {
 
 window.addEventListener('beforeunload', endSession);
 window.addEventListener('load', initializeWebSocket);
-document.addEventListener('DOMContentLoaded', initializeWebSocket);console.log('토큰이 없음 - 기본값 1 사용');
-        return 1;
-    }
-    
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('토큰 페이로드:', payload);
-        return payload.userId || payload.sub || payload.id || 1;
-    } catch (e) {
-        console.error('토큰 파싱 실패:', e);
-        return 1;
-    }
-}
-
-function initializeWebSocket() {
-    userId = getUserIdFromToken() || 1;
-    console.log('=== WebSocket 초기화 ===');
-    console.log('사용자 ID:', userId);
-    
-    connectWebSocket();
-    startSession();
-    startActivityTracking();
-}
-
-function connectWebSocket() {
-    if (reconnectAttempts >= maxReconnectAttempts) {
-        console.log('최대 재연결 시도 횟수 초과. 폴링 모드로 전환.');
-        startPollingMode();
-        return;
-    }
-    
-    console.log('WebSocket 연결 시도... (시도 횟수:', reconnectAttempts + 1, ')');
-    const socket = new SockJS('/ws');
-    stompClient = Stomp.over(socket);
-    
-    stompClient.heartbeat.outgoing = 20000;
-    stompClient.heartbeat.incoming = 20000;
-    
-    stompClient.connect({}, function(frame) {
-        console.log('✅ WebSocket 연결 성공:', frame);
-        isConnected = true;
-        reconnectAttempts = 0;
-        
-        stompClient.subscribe('/user/queue/hints', function(message) {
-            console.log('💡 개인 힌트 수신:', message.body);
-            const hintData = JSON.parse(message.body);
-            showHint(hintData.message);
-        });
-        
-        stompClient.subscribe('/topic/global-hints', function(message) {
-            console.log('📢 전체 힌트 수신:', message.body);
-            const hintData = JSON.parse(message.body);
-            showGlobalHint(hintData.message);
-        });
-        
-        stompClient.subscribe('/topic/teacher-hints', function(message) {
-            console.log('🎯 Fallback 힌트 수신:', message.body);
-            const hintData = JSON.parse(message.body);
-            if (hintData.targetUserId && hintData.targetUserId == userId) {
-                console.log('내게 온 힌트:', hintData.message);
-                showHint(hintData.message);
-            }
-        });
-        
-        stompClient.subscribe('/topic/teacher-announcements', function(message) {
-            console.log('📝 공지 수신:', message.body);
-            const announcementData = JSON.parse(message.body);
-            showAnnouncement(announcementData);
-        });
-        
-        stompClient.subscribe('/topic/quiz-broadcast', function(message) {
-            console.log('⚡ 퀴즈 수신:', message.body);
-            const quizData = JSON.parse(message.body);
-            showQuiz(quizData);
-        });
-        
-    }, function(error) {
-        console.error('❌ WebSocket 연결 실패:', error);
-        isConnected = false;
-        reconnectAttempts++;
-        
-        setTimeout(connectWebSocket, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
-    });
-}
-
-function startPollingMode() {
-    console.log('폴링 모드로 전환됨');
-    setInterval(function() {
-        fetch('/api/student/check-notifications?userId=' + userId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.hints) {
-                    data.hints.forEach(hint => showHint(hint.message));
-                }
-            })
-            .catch(error => console.log('폴링 실패:', error));
-    }, 5000);
-}
-
-function startSession() {
-    if (!userId) {
-        console.error('❌ userId가 없음. 세션 시작 불가');
-        return;
-    }
-    
-    sessionId = 'session-' + Date.now() + '-' + userId;
-    console.log('세션 시작 시도:', sessionId);
-    
-    fetch('/api/session/start', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            userId: userId,
-            sessionId: sessionId
-        })
-    })
-    .then(response => {
-        console.log('세션 시작 응답 상태:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ 세션 시작 성공:', data);
-    })
-    .catch(error => {
-        console.error('❌ 세션 시작 실패:', error);
-    });
-}
-
-function startActivityTracking() {
-    if (activityInterval) {
-        clearInterval(activityInterval);
-    }
-    
-    activityInterval = setInterval(sendActivityUpdate, 30000);
-    
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-            sendActivityUpdate();
-        }
-    });
-    
-    sendActivityUpdate();
-}
-
-function sendActivityUpdate() {
-    if (!userId) {
-        console.log('userId가 없어서 활동 업데이트 생략');
-        return;
-    }
-    
-    const currentPage = window.location.pathname;
-    const codeEditor = document.getElementById('codeEditor') || document.getElementById('editor-container');
-    let currentCode = '';
-    let isCoding = false;
-    
-    if (codeEditor) {
-        if (typeof editor !== 'undefined' && editor) {
-            currentCode = editor.getValue();
-            isCoding = currentCode.length > 10;
-        } else if (codeEditor.value) {
-            currentCode = codeEditor.value;
-            isCoding = currentCode.length > 10;
-        }
-    }
-    
-    console.log('활동 업데이트 전송:', {
-        userId: userId,
-        page: currentPage,
-        isCoding: isCoding,
-        codeLength: currentCode.length
-    });
-    
-    if (stompClient && isConnected) {
-        try {
-            stompClient.send('/app/student/activity', {}, JSON.stringify({
-                userId: userId,
-                page: currentPage,
-                code: currentCode.length > 500 ? currentCode.substring(0, 500) : currentCode,
-                isCoding: isCoding
-            }));
-            console.log('✅ WebSocket 활동 업데이트 전송 성공');
-        } catch (error) {
-            console.error('❌ WebSocket 활동 업데이트 전송 실패:', error);
-        }
-    } else {
-        console.log('WebSocket 재연결 필요');
-        if (reconnectAttempts < maxReconnectAttempts) {
-            connectWebSocket();
-        }
-    }
-}
-
-function endSession() {
-    if (!userId) return;
-    
-    fetch('/api/session/end', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            userId: userId
-        })
-    })
-    .catch(error => {
-        console.error('❌ 세션 종료 실패:', error);
-    });
-    
-    if (activityInterval) {
-        clearInterval(activityInterval);
-    }
-    
-    if (stompClient && isConnected) {
-        stompClient.disconnect();
-    }
-}
-
-function showHint(message) {
-    console.log('💡 힌트 표시:', message);
-    const hintPopup = document.createElement('div');
-    hintPopup.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #3498db;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 99999;
-        max-width: 300px;
-        font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    hintPopup.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px; color: #fff !important;">💡 선생님 힌트</div>
-        <div style="color: #fff !important;">${message}</div>
-    `;
-    
-    document.body.appendChild(hintPopup);
-    
-    setTimeout(() => {
-        hintPopup.remove();
-    }, 5000);
-}
-
-function showGlobalHint(message) {
-    console.log('📢 전체 힌트 표시:', message);
-    const hintPopup = document.createElement('div');
-    hintPopup.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #e74c3c;
-        color: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        max-width: 400px;
-        font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    hintPopup.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">📢 전체 공지</div>
-        <div>${message}</div>
-    `;
-    
-    document.body.appendChild(hintPopup);
-    
-    setTimeout(() => {
-        hintPopup.remove();
-    }, 8000);
-}
+document.addEventListener('DOMContentLoaded', initializeWebSocket);
