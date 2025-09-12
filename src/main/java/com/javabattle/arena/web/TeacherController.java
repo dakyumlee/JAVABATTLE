@@ -70,10 +70,16 @@ public class TeacherController {
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getActiveStudents() {
         try {
+            System.out.println("=== 활성 학생 조회 요청 ===");
             List<ActiveSession> sessions = sessionService.getActiveSessions();
+            System.out.println("조회된 세션 개수: " + sessions.size());
             
             List<Map<String, Object>> result = sessions.stream()
-                .filter(session -> session.getIsActive() != null && session.getIsActive())
+                .filter(session -> {
+                    boolean isActive = session.getIsActive() != null && session.getIsActive();
+                    System.out.println("세션 " + session.getId() + " 활성 상태: " + isActive);
+                    return isActive;
+                })
                 .map(session -> {
                     Map<String, Object> studentData = new HashMap<>();
                     studentData.put("userId", session.getUserId());
@@ -88,22 +94,36 @@ public class TeacherController {
                         Optional<User> userOpt = userRepository.findById(session.getUserId());
                         if (userOpt.isPresent()) {
                             User user = userOpt.get();
-                            studentData.put("nickname", user.getNickname());
+                            String nickname = user.getNickname();
+                            if (nickname == null || nickname.trim().isEmpty()) {
+                                nickname = user.getEmail();
+                            }
+                            if (nickname == null || nickname.trim().isEmpty()) {
+                                nickname = "학생" + session.getUserId();
+                            }
+                            studentData.put("nickname", nickname);
                             studentData.put("email", user.getEmail());
+                            System.out.println("사용자 " + session.getUserId() + " -> " + nickname);
                         } else {
-                            studentData.put("nickname", "학생" + session.getUserId());
+                            String fallbackName = "학생" + session.getUserId();
+                            studentData.put("nickname", fallbackName);
                             studentData.put("email", "unknown@test.com");
+                            System.out.println("사용자 " + session.getUserId() + " 정보 없음 -> " + fallbackName);
                         }
                     } catch (Exception e) {
-                        studentData.put("nickname", "학생" + session.getUserId());
+                        String fallbackName = "학생" + session.getUserId();
+                        studentData.put("nickname", fallbackName);
                         studentData.put("email", "unknown@test.com");
+                        System.err.println("사용자 " + session.getUserId() + " 조회 실패: " + e.getMessage());
                     }
                     
                     return studentData;
                 }).collect(Collectors.toList());
             
+            System.out.println("최종 반환할 학생 수: " + result.size());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            System.err.println("활성 학생 조회 중 오류: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
@@ -113,27 +133,60 @@ public class TeacherController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> sendHint(@RequestBody Map<String, Object> request) {
         try {
+            System.out.println("=== 힌트 전송 요청 ===");
+            System.out.println("요청 데이터: " + request);
+            
             Long studentId = Long.valueOf(request.get("studentId").toString());
             String message = (String) request.get("message");
+            
+            System.out.println("학생 ID: " + studentId);
+            System.out.println("메시지: " + message);
+            
+            Optional<User> userOpt = userRepository.findById(studentId);
+            if (!userOpt.isPresent()) {
+                System.out.println("사용자를 찾을 수 없음: " + studentId);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "해당 학생을 찾을 수 없습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
             
             Map<String, Object> hintData = new HashMap<>();
             hintData.put("type", "HINT");
             hintData.put("message", message);
             hintData.put("from", "teacher");
             hintData.put("timestamp", LocalDateTime.now());
+            hintData.put("studentId", studentId);
             
-            messagingTemplate.convertAndSendToUser(
-                studentId.toString(), 
-                "/queue/hints", 
-                hintData
-            );
+            try {
+                messagingTemplate.convertAndSendToUser(
+                    studentId.toString(), 
+                    "/queue/hints", 
+                    hintData
+                );
+                System.out.println("개인 힌트 전송 완료");
+                
+                Map<String, Object> fallbackHint = new HashMap<>(hintData);
+                fallbackHint.put("targetUserId", studentId);
+                messagingTemplate.convertAndSend("/topic/teacher-hints", fallbackHint);
+                System.out.println("Fallback 힌트도 전송");
+                
+            } catch (Exception wsError) {
+                System.err.println("WebSocket 전송 실패: " + wsError.getMessage());
+                wsError.printStackTrace();
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Hint sent successfully");
+            response.put("studentName", userOpt.get().getNickname());
             
+            System.out.println("힌트 전송 응답: " + response);
             return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
+            System.err.println("힌트 전송 중 오류: " + e.getMessage());
+            e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Failed to send hint: " + e.getMessage());
