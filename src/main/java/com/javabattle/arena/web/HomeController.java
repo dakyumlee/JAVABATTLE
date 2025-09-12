@@ -35,6 +35,11 @@ public class HomeController {
         return "index";
     }
 
+    @GetMapping("/admin")
+    public String admin() {
+        return "admin";
+    }
+
     @GetMapping("/study")
     public String study() {
         return "study";
