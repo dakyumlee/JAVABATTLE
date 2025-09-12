@@ -437,7 +437,7 @@
             `;
             
             chatMessages.appendChild(messageDiv);
-            
+             
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
@@ -449,7 +449,7 @@
             typingDiv.className = 'typing-indicator active';
             typingDiv.id = 'typingIndicator';
             typingDiv.innerHTML = `
-                <div class="message-avatar">AI</div>
+                <div class="message-avatar" style="background: #27ae60; color: white;">AI</div>
                 <div class="typing-dots">
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -457,7 +457,7 @@
                 </div>
             `;
             chatMessages.appendChild(typingDiv);
-            
+             
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
@@ -519,7 +519,7 @@
                 messageInput.focus();
             }
         }
-
+ 
         function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
             const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 120);
@@ -536,7 +536,7 @@
                 sendMessage();
             }
         });
-
+ 
         document.addEventListener('DOMContentLoaded', function() {
             const messageInput = document.getElementById('messageInput');
             messageInput.focus();
