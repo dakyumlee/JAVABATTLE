@@ -1,6 +1,7 @@
 package com.javabattle.arena.web;
 
 import com.javabattle.arena.model.User;
+import com.javabattle.arena.model.User.UserRole;  // 이 import 추가!
 import com.javabattle.arena.repository.UserRepository;
 import com.javabattle.arena.repository.StudentActivityRepository;
 import com.javabattle.arena.repository.MaterialAccessRepository;
@@ -69,7 +70,7 @@ public class StatisticsController {
             } catch (Exception e) {}
             
             try {
-                totalStudents = userRepository.countByRole("STUDENT");
+                totalStudents = userRepository.countByRole(UserRole.STUDENT);  // 수정!
             } catch (Exception e) {}
             
             Map<String, Object> overview = new HashMap<>();
@@ -186,7 +187,7 @@ public class StatisticsController {
         try {
             List<User> students = null;
             try {
-                students = userRepository.findByRole("STUDENT");
+                students = userRepository.findByRole(UserRole.STUDENT);  // 수정!
             } catch (Exception e) {}
             
             List<Map<String, Object>> performance = new ArrayList<>();
@@ -242,7 +243,7 @@ public class StatisticsController {
             
             List<User> students = null;
             try {
-                students = userRepository.findByRole("STUDENT");
+                students = userRepository.findByRole(UserRole.STUDENT);  // 수정!
             } catch (Exception e) {}
             
             if (students != null && !students.isEmpty()) {
@@ -302,7 +303,7 @@ public class StatisticsController {
             
             List<User> students = null;
             try {
-                students = userRepository.findByRole("STUDENT");
+                students = userRepository.findByRole(UserRole.STUDENT);  // 수정!
             } catch (Exception e) {}
             
             if (students != null && !students.isEmpty()) {
@@ -350,18 +351,26 @@ public class StatisticsController {
         try {
             long totalUsers = userRepository.count();
             List<User> allUsers = userRepository.findAll();
-            List<User> students = userRepository.findByRole("STUDENT");
+            List<User> students = userRepository.findByRole(UserRole.STUDENT);  // 수정!
             
             StringBuilder result = new StringBuilder();
+            result.append("=== 사용자 디버깅 정보 ===\n");
             result.append("전체 사용자 수: ").append(totalUsers).append("\n");
-            result.append("전체 사용자: ");
+            result.append("학생 수 (findByRole): ").append(students.size()).append("\n\n");
+            
+            result.append("=== 전체 사용자 목록 ===\n");
             for (User user : allUsers) {
-                result.append(user.getNickname()).append("(").append(user.getRole()).append(") ");
+                result.append("ID: ").append(user.getId())
+                      .append(", 닉네임: ").append(user.getNickname())
+                      .append(", 역할: '").append(user.getRole())
+                      .append("', 타입: ").append(user.getRole().getClass().getSimpleName())
+                      .append("\n");
             }
-            result.append("\n학생 수: ").append(students.size()).append("\n");
-            result.append("학생들: ");
+            
+            result.append("\n=== 학생만 필터링 ===\n");
             for (User student : students) {
-                result.append(student.getNickname()).append(" ");
+                result.append("학생: ").append(student.getNickname())
+                      .append(" (역할: '").append(student.getRole()).append("')\n");
             }
             
             return ResponseEntity.ok(result.toString());
