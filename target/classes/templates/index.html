@@ -506,17 +506,17 @@
    		<div class="admin-section" id="adminSection">
    			<h2 class="admin-title">⚙️ 관리자 전용</h2>
    			<div class="admin-actions">
+   				<button class="battle-btn" onclick="goToAdminDashboard()">
+   					📊 관리자 대시보드
+   				</button>
    				<button class="battle-btn" onclick="promoteTeacher()">
    					👨‍🏫 강사 권한 부여
    				</button>
    				<button class="battle-btn" onclick="createTeacherAccount()">
    					➕ 강사 계정 생성
    				</button>
-   				<button class="battle-btn" onclick="manageUsers()">
+   				<button class="battle-btn secondary" onclick="manageUsers()">
    					👥 사용자 관리
-   				</button>
-   				<button class="battle-btn secondary" onclick="systemSettings()">
-   					⚙️ 시스템 설정
    				</button>
    			</div>
    		</div>
@@ -765,9 +765,17 @@
 
    	function goToTeacherStats() {
    		if (currentUserRole === 'TEACHER' || currentUserRole === 'ADMIN') {
-   			window.location.href = '/statistics';
+   			window.location.href = '/teacher-stats';
    		} else {
    			alert('강사 권한이 필요합니다.');
+   		}
+   	}
+
+   	function goToAdminDashboard() {
+   		if (currentUserRole === 'ADMIN') {
+   			window.location.href = '/admin';
+   		} else {
+   			alert('관리자 권한이 필요합니다.');
    		}
    	}
 
@@ -818,7 +826,7 @@
 
    	function manageUsers() {
    		if (currentUserRole === 'ADMIN') {
-   			window.location.href = '/admin/users';
+   			window.location.href = '/admin';
    		} else {
    			alert('관리자 권한이 필요합니다.');
    		}
@@ -826,7 +834,7 @@
 
    	function systemSettings() {
    		if (currentUserRole === 'ADMIN') {
-   			window.location.href = '/admin/settings';
+   			window.location.href = '/admin';
    		} else {
    			alert('관리자 권한이 필요합니다.');
    		}

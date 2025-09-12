@@ -25,6 +25,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
+            z-index: 10;
         }
         
         .logo {
@@ -58,6 +60,14 @@
             transform: translateY(-2px);
         }
         
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
         .chat-container {
             flex: 1;
             display: flex;
@@ -65,18 +75,23 @@
             max-width: 900px;
             margin: 0 auto;
             width: 100%;
-            padding: 2rem;
+            padding: 2rem 2rem 0 2rem;
             gap: 1.5rem;
+            min-height: 0;
+            overflow: hidden;
         }
         
         .chat-messages {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 2rem;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             scroll-behavior: smooth;
+            min-height: 200px;
+            position: relative;
         }
         
         .chat-messages::-webkit-scrollbar {
@@ -89,8 +104,12 @@
         }
         
         .chat-messages::-webkit-scrollbar-thumb {
-            background: #333;
+            background: rgba(255, 255, 255, 0.3);
             border-radius: 3px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
         
         .message {
@@ -99,6 +118,8 @@
             align-items: flex-start;
             gap: 1rem;
             animation: slideIn 0.3s ease-out;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         @keyframes slideIn {
@@ -126,6 +147,7 @@
             font-weight: 700;
             font-size: 1rem;
             flex-shrink: 0;
+            margin-top: 4px;
         }
         
         .message.user .message-avatar {
@@ -144,13 +166,16 @@
         }
         
         .message-bubble {
-            max-width: 70%;
+            max-width: calc(100% - 60px);
             padding: 1.25rem 1.5rem;
             border-radius: 20px;
             position: relative;
             word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
             line-height: 1.6;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            min-width: 0;
         }
         
         .message.user .message-bubble {
@@ -176,7 +201,7 @@
         
         .typing-indicator {
             display: none;
-            align-items: center;
+            align-items: flex-start;
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
@@ -211,12 +236,17 @@
             40% { transform: scale(1); opacity: 1; }
         }
         
+        .bottom-section {
+            flex-shrink: 0;
+            padding: 0 2rem 2rem 2rem;
+            background: #0a0a0a;
+        }
+        
         .quick-questions {
             display: flex;
             gap: 0.75rem;
             margin-bottom: 1.5rem;
             flex-wrap: wrap;
-            padding: 0 1rem;
         }
         
         .quick-btn {
@@ -229,6 +259,7 @@
             font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
         
         .quick-btn:hover {
@@ -260,6 +291,7 @@
             min-height: 50px;
             max-height: 120px;
             transition: all 0.3s ease;
+            overflow: hidden;
         }
         
         .message-input:focus {
@@ -283,6 +315,7 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
             min-width: 80px;
+            flex-shrink: 0;
         }
         
         .send-btn:hover:not(:disabled) {
@@ -301,17 +334,16 @@
         
         @media (max-width: 768px) {
             .chat-container {
-                padding: 1rem;
+                padding: 1rem 1rem 0 1rem;
                 gap: 1rem;
             }
             
-            .message-bubble {
-                max-width: 85%;
-                padding: 1rem 1.25rem;
+            .bottom-section {
+                padding: 0 1rem 1rem 1rem;
             }
             
-            .quick-questions {
-                padding: 0;
+            .message-bubble {
+                padding: 1rem 1.25rem;
             }
             
             .quick-btn {
@@ -321,10 +353,20 @@
             
             .input-area {
                 padding: 1rem;
+                gap: 0.75rem;
             }
             
             .header {
                 padding: 1rem 1.5rem;
+            }
+            
+            .message-input {
+                min-height: 44px;
+            }
+            
+            .send-btn {
+                padding: 0.8rem 1.2rem;
+                min-width: 70px;
             }
         }
     </style>
@@ -338,31 +380,33 @@
         <a href="/" class="back-btn">← 홈으로</a>
     </div>
 
-    <div class="chat-container">
-        <div class="chat-messages" id="chatMessages">
-            <div class="message system">
-                <div class="message-avatar">AI</div>
-                <div class="message-bubble">
-                    안녕하세요! Java에 대해 무엇이든 물어보세요 😊
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message system">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-bubble">
+                        안녕하세요! Java에 대해 무엇이든 물어보세요 😊
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="quick-questions">
-            <button class="quick-btn" onclick="sendQuickQuestion('변수와 상수의 차이점은 무엇인가요?')">변수 vs 상수</button>
-            <button class="quick-btn" onclick="sendQuickQuestion('for문과 while문의 차이점을 설명해주세요')">반복문 차이</button>
-            <button class="quick-btn" onclick="sendQuickQuestion('클래스와 객체의 개념을 쉽게 설명해주세요')">클래스 vs 객체</button>
-            <button class="quick-btn" onclick="sendQuickQuestion('배열과 ArrayList의 차이점은?')">배열 vs List</button>
-        </div>
+        <div class="bottom-section">
+            <div class="quick-questions">
+                <button class="quick-btn" onclick="sendQuickQuestion('변수와 상수의 차이점은 무엇인가요?')">변수 vs 상수</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('for문과 while문의 차이점을 설명해주세요')">반복문 차이</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('클래스와 객체의 개념을 쉽게 설명해주세요')">클래스 vs 객체</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('배열과 ArrayList의 차이점은?')">배열 vs List</button>
+            </div>
 
-        <div class="input-area">
-            <textarea id="messageInput" class="message-input" placeholder="Java에 대해 무엇이든 물어보세요..." rows="1"></textarea>
-            <button class="send-btn" onclick="sendMessage()">전송</button>
+            <div class="input-area">
+                <textarea id="messageInput" class="message-input" placeholder="Java에 대해 무엇이든 물어보세요..." rows="1"></textarea>
+                <button class="send-btn" onclick="sendMessage()">전송</button>
+            </div>
         </div>
     </div>
-	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-	<script src="/js/student-activity.js"></script>
+
     <script>
         function getUserNickname() {
             const username = localStorage.getItem('username');
@@ -394,7 +438,10 @@
             `;
             
             chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 50);
         }
 
         function showTypingIndicator() {
@@ -411,7 +458,11 @@
                 </div>
             `;
             chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // 스크롤을 부드럽게 맨 아래로 이동
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 50);
         }
 
         function hideTypingIndicator() {
@@ -438,6 +489,7 @@
             
             addMessage(message, 'user');
             messageInput.value = '';
+            messageInput.style.height = '50px';
             
             showTypingIndicator();
             
@@ -470,9 +522,14 @@
             }
         }
 
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 120);
+            textarea.style.height = newHeight + 'px';
+        }
+
         document.getElementById('messageInput').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            adjustTextareaHeight(this);
         });
 
         document.getElementById('messageInput').addEventListener('keypress', function(e) {
@@ -483,7 +540,18 @@
         });
 
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('messageInput').focus();
+            const messageInput = document.getElementById('messageInput');
+            messageInput.focus();
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        window.addEventListener('resize', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
         });
     </script>
 </body>
