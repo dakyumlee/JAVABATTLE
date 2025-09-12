@@ -7,63 +7,75 @@ import java.time.LocalDateTime;
 @Table(name = "problems")
 public class Problem {
 
-@Id
-@GeneratedValue(strategy = GenerationType.IDENTITY)
-@Column(name = "id")
-private Long problemId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long problemId;
 
-@Column(name = "TITLE", nullable = false, length = 200)
-private String title;
+    @Column(name = "TITLE", nullable = false, length = 200)
+    private String title;
 
-@Column(name = "DESCRIPTION", nullable = false, columnDefinition = "TEXT")
-private String description;
+    @Column(name = "DESCRIPTION", nullable = false, columnDefinition = "TEXT")
+    private String description;
 
-@Column(name = "DIFFICULTY", length = 20)
-private String difficulty = "EASY";
+    @Column(name = "DIFFICULTY", length = 20)
+    private String difficulty = "EASY";
 
-@Column(name = "CATEGORY", length = 50)
-private String category;
+    @Column(name = "CATEGORY", length = 50)
+    private String category;
 
-@Column(name = "SAMPLE_INPUT", columnDefinition = "TEXT")
-private String sampleInput;
+    @Column(name = "SAMPLE_INPUT", columnDefinition = "TEXT")
+    private String sampleInput;
 
-@Column(name = "SAMPLE_OUTPUT", columnDefinition = "TEXT")
-private String sampleOutput;
+    @Column(name = "SAMPLE_OUTPUT", columnDefinition = "TEXT")
+    private String sampleOutput;
 
-@Column(name = "SOLUTION_TEMPLATE", columnDefinition = "TEXT")
-private String solutionTemplate;
+    @Column(name = "SOLUTION_TEMPLATE", columnDefinition = "TEXT")
+    private String solutionTemplate;
 
-@Column(name = "CREATED_AT")
-private LocalDateTime createdAt;
+    @Column(name = "CREATED_AT")
+    private LocalDateTime createdAt;
 
-public Problem() {
-this.createdAt = LocalDateTime.now();
-}
+    @Column(name = "expected_concepts", columnDefinition = "TEXT")
+    private String expectedConcepts;
 
-public Long getProblemId() { return problemId; }
-public void setProblemId(Long problemId) { this.problemId = problemId; }
+    @Column(name = "evaluation_type", length = 20)
+    private String evaluationType = "AI_ASSISTED";
 
-public String getTitle() { return title; }
-public void setTitle(String title) { this.title = title; }
+    public Problem() {
+        this.createdAt = LocalDateTime.now();
+    }
 
-public String getDescription() { return description; }
-public void setDescription(String description) { this.description = description; }
+    public Long getProblemId() { return problemId; }
+    public void setProblemId(Long problemId) { this.problemId = problemId; }
 
-public String getDifficulty() { return difficulty; }
-public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-public String getCategory() { return category; }
-public void setCategory(String category) { this.category = category; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-public String getSampleInput() { return sampleInput; }
-public void setSampleInput(String sampleInput) { this.sampleInput = sampleInput; }
+    public String getDifficulty() { return difficulty; }
+    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
 
-public String getSampleOutput() { return sampleOutput; }
-public void setSampleOutput(String sampleOutput) { this.sampleOutput = sampleOutput; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-public String getSolutionTemplate() { return solutionTemplate; }
-public void setSolutionTemplate(String solutionTemplate) { this.solutionTemplate = solutionTemplate; }
+    public String getSampleInput() { return sampleInput; }
+    public void setSampleInput(String sampleInput) { this.sampleInput = sampleInput; }
 
-public LocalDateTime getCreatedAt() { return createdAt; }
-public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getSampleOutput() { return sampleOutput; }
+    public void setSampleOutput(String sampleOutput) { this.sampleOutput = sampleOutput; }
+
+    public String getSolutionTemplate() { return solutionTemplate; }
+    public void setSolutionTemplate(String solutionTemplate) { this.solutionTemplate = solutionTemplate; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getExpectedConcepts() { return expectedConcepts; }
+    public void setExpectedConcepts(String expectedConcepts) { this.expectedConcepts = expectedConcepts; }
+
+    public String getEvaluationType() { return evaluationType; }
+    public void setEvaluationType(String evaluationType) { this.evaluationType = evaluationType; }
 }

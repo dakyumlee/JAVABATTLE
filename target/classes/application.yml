@@ -1,30 +1,28 @@
 spring:
   datasource:
-    url: jdbc:postgresql://cduf3or326qj7m.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d65ek8v573fq4c
-    username: u4bftv9a3g89dj
-    password: p85e150befa9e4cf1f81ed85a6a6e46bb8e535a989cf136d3ffe0f851cce4ec30
+    url: ${DATABASE_URL}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+
   thymeleaf:
-    cache: false
-  servlet:
-    multipart:
-      max-file-size: 100MB
-      max-request-size: 100MB
+    cache: true
 
 server:
-  port: 8080
-  tomcat:
-    max-http-form-post-size: 100MB
-    connection-timeout: 60000
+  port: ${PORT:8080}
 
 jwt:
-  secret: javabattlearenasecretkeyforjwttoken2024verylongkeyforhs512algorithmsecurityrequirements
+  secret: ${JWT_SECRET:fallback-secret-key}
   expiration: 86400000
+
+claude:
+  api:
+    key: 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
+
+logging:
+  level:
+    com.javabattle: INFO

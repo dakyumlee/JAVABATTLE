@@ -1,343 +1,210 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>코딩 연습 - Java Battle Arena</title>
-   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
-   <style>
-       * {
-           margin: 0;
-           padding: 0;
-           box-sizing: border-box;
-       }
+    <meta charset="UTF-8">
+    <style>
+        .ai-feedback-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
 
-       body {
-           font-family: 'Pretendard', sans-serif;
-           background: #0a0a0a;
-           color: #ffffff;
-           min-height: 100vh;
-       }
+        .ai-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
 
-       .header {
-           background: #1a1a1a;
-           padding: 1rem 2rem;
-           border-bottom: 1px solid #333;
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-       }
+        .score-display {
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
 
-       .logo {
-           display: flex;
-           align-items: center;
-           gap: 0.5rem;
-           font-size: 1.2rem;
-           font-weight: 600;
-           color: #3498db;
-       }
+        .creative-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
 
-       .back-btn {
-           background: #6c757d;
-           color: white;
-           padding: 0.5rem 1rem;
-           border: none;
-           border-radius: 6px;
-           cursor: pointer;
-           text-decoration: none;
-           transition: background-color 0.2s ease;
-       }
+        .feedback-section {
+            margin-bottom: 1rem;
+        }
 
-       .back-btn:hover {
-           background: #5a6268;
-       }
+        .feedback-content {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+        }
 
-       .container {
-           max-width: 1200px;
-           margin: 0 auto;
-           padding: 2rem;
-       }
+        .strengths-list li::before { content: "✅"; position: absolute; left: 0; }
+        .improvements-list li::before { content: "💡"; position: absolute; left: 0; }
 
-       .curriculum-tabs {
-           display: flex;
-           gap: 0.5rem;
-           margin-bottom: 2rem;
-           overflow-x: auto;
-           padding-bottom: 0.5rem;
-       }
+        .loading-ai {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
 
-       .tab {
-           padding: 0.75rem 1.5rem;
-           background: #2d2d2d;
-           border: 1px solid #333;
-           border-radius: 8px;
-           cursor: pointer;
-           transition: all 0.3s ease;
-           white-space: nowrap;
-           font-size: 0.9rem;
-       }
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #dee2e6;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-       .tab.active {
-           background: #3498db;
-           border-color: #3498db;
-       }
-
-       .tab:hover:not(.active) {
-           background: #3d3d3d;
-       }
-
-       .chapter-title {
-           color: #3498db;
-           font-size: 1.3rem;
-           font-weight: 600;
-           margin-bottom: 1.5rem;
-           border-bottom: 2px solid #3498db;
-           padding-bottom: 0.5rem;
-       }
-
-       .problems-grid {
-           display: grid;
-           grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-           gap: 1.5rem;
-       }
-
-       .problem-card {
-           background: #1a1a1a;
-           border: 1px solid #333;
-           border-radius: 12px;
-           padding: 1.5rem;
-           cursor: pointer;
-           transition: all 0.3s ease;
-       }
-
-       .problem-card:hover {
-           border-color: #3498db;
-           transform: translateY(-3px);
-           box-shadow: 0 8px 20px rgba(52, 152, 219, 0.2);
-       }
-
-       .problem-title {
-           font-size: 1.2rem;
-           font-weight: 600;
-           margin-bottom: 0.5rem;
-           color: #3498db;
-       }
-
-       .problem-description {
-           color: #95a5a6;
-           margin-bottom: 1rem;
-           line-height: 1.5;
-           font-size: 0.95rem;
-       }
-
-       .problem-meta {
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-       }
-
-       .difficulty {
-           padding: 0.25rem 0.75rem;
-           border-radius: 12px;
-           font-size: 0.8rem;
-           font-weight: 500;
-       }
-
-       .difficulty.very-easy {
-           background: linear-gradient(135deg, #2ecc71, #27ae60);
-           color: white;
-       }
-
-       .difficulty.easy {
-           background: linear-gradient(135deg, #3498db, #2980b9);
-           color: white;
-       }
-
-       .difficulty.medium {
-           background: linear-gradient(135deg, #f39c12, #e67e22);
-           color: white;
-       }
-
-       .difficulty.hard {
-           background: linear-gradient(135deg, #e74c3c, #c0392b);
-           color: white;
-       }
-
-       .difficulty.very-hard {
-           background: linear-gradient(135deg, #8e44ad, #732d91);
-           color: white;
-       }
-
-       .solve-count {
-           color: #95a5a6;
-           font-size: 0.9rem;
-       }
-
-       @media (max-width: 768px) {
-           .container {
-               padding: 1rem;
-           }
-           
-           .problems-grid {
-               grid-template-columns: 1fr;
-           }
-           
-           .curriculum-tabs {
-               gap: 0.25rem;
-           }
-           
-           .tab {
-               padding: 0.5rem 1rem;
-               font-size: 0.8rem;
-           }
-       }
-   </style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
-   <div class="header">
-       <div class="logo">
-           💻 코딩 연습
-       </div>
-       <a href="/" class="back-btn">← 홈으로</a>
-   </div>
+    <div id="aiLoadingState" class="loading-ai" style="display: none;">
+        <div class="loading-spinner"></div>
+        <span>🤖 AI가 당신의 코드를 분석하고 있어요...</span>
+    </div>
 
-   <div class="container">
-       <div class="curriculum-tabs">
-       </div>
+    <div id="aiFeedbackResult" class="ai-feedback-container" style="display: none;">
+        <div class="ai-feedback-header">
+            <span>🤖 AI 코드 분석 결과</span>
+            <span id="creativeBadge" class="creative-badge" style="display: none;">🎨 창의적 해결!</span>
+        </div>
 
-       <div id="chapterTitle" class="chapter-title">로딩 중...</div>
+        <div class="score-display">
+            <span>점수:</span>
+            <span id="aiScore">95</span>
+            <span>/100</span>
+        </div>
 
-       <div class="problems-grid" id="problemsGrid">
-       </div>
-   </div>
-	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-	<script src="/js/student-activity.js"></script>
-<script>
-    let allCategories = [];
-    let categoryProblems = {};
+        <div class="feedback-section">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">📝 종합 평가</div>
+            <div class="feedback-content" id="aiFeedbackText"></div>
+        </div>
 
-    async function loadCategories() {
-        try {
-            const response = await fetch('/practice/api/categories');
-            const categories = await response.json();
-            
-            const categoryOrder = [
-                'HTML 기초', 'CSS 기초', 'JavaScript 기초',
-                'Java 기초', '객체지향', 'Java 심화',
-                'DB/SQL', 'JDBC', 'JPA',
-                'Servlet/JSP', 'Spring Framework', 'Spring Boot',
-                'MyBatis', '최종 프로젝트'
-            ];
-            
-            allCategories = categoryOrder.filter(cat => categories.includes(cat));
-            
-            renderTabs();
-            if (allCategories.length > 0) {
-                showCurriculum(allCategories[0]);
-            }
-        } catch (error) {
-            console.error('카테고리 로딩 실패:', error);
-        }
-    }
-
-    async function loadProblems(category) {
-        try {
-            const response = await fetch(`/practice/api/problems?category=${encodeURIComponent(category)}`);
-            const problems = await response.json();
-            categoryProblems[category] = problems;
-            return problems;
-        } catch (error) {
-            console.error('문제 로딩 실패:', error);
-            return [];
-        }
-    }
-
-    function renderTabs() {
-        const tabsContainer = document.querySelector('.curriculum-tabs');
-        tabsContainer.innerHTML = '';
-        
-        allCategories.forEach((category, index) => {
-            const tab = document.createElement('div');
-            tab.className = `tab ${index === 0 ? 'active' : ''}`;
-            tab.textContent = category;
-            tab.addEventListener('click', () => showCurriculum(category));
-            tabsContainer.appendChild(tab);
-        });
-    }
-
-    async function showCurriculum(category) {
-        const activeTab = document.querySelector('.tab.active');
-        if (activeTab) {
-            activeTab.classList.remove('active');
-        }
-        
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
-            if (tab.textContent === category) {
-                tab.classList.add('active');
-            }
-        });
-        
-        document.getElementById('chapterTitle').textContent = category;
-        
-        let problems = categoryProblems[category];
-        if (!problems) {
-            problems = await loadProblems(category);
-        }
-        
-        renderProblems(problems);
-    }
-
-    function renderProblems(problems) {
-        const grid = document.getElementById('problemsGrid');
-        grid.innerHTML = '';
-        
-        problems.forEach(problem => {
-            const card = createProblemCard(problem);
-            grid.appendChild(card);
-        });
-    }
-
-    function createProblemCard(problem) {
-        const card = document.createElement('div');
-        card.className = 'problem-card';
-        card.addEventListener('click', () => solveProblem(problem.problemId));
-        
-        card.innerHTML = `
-            <div class="problem-title">${problem.title}</div>
-            <div class="problem-description">${problem.description}</div>
-            <div class="problem-meta">
-                <span class="difficulty ${getDifficultyClass(problem.difficulty)}">${problem.difficulty}</span>
+        <div class="feedback-section" id="strengthsSection" style="display: none;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">✨ 잘한 점</div>
+            <div class="feedback-content">
+                <ul id="strengthsList" style="list-style: none; padding: 0;">
+                </ul>
             </div>
-        `;
-        
-        return card;
-    }
+        </div>
 
-    function getDifficultyClass(difficulty) {
-        if (difficulty === '매우 쉬움') return 'very-easy';
-        if (difficulty === '쉬움') return 'easy';
-        if (difficulty === '보통') return 'medium';
-        if (difficulty === '어려움') return 'hard';
-        if (difficulty === '매우 어려움') return 'very-hard';
-        
-        if (difficulty === 'EASY') return 'easy';
-        if (difficulty === 'MEDIUM') return 'medium';
-        if (difficulty === 'HARD') return 'hard';
-        
-        return 'easy';
-    }
-    
-    function solveProblem(problemId) {
-        window.location.href = `/practice/solve/${problemId}`;
-    }
+        <div class="feedback-section" id="improvementsSection" style="display: none;">
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">🚀 개선할 점</div>
+            <div class="feedback-content">
+                <ul id="improvementsList" style="list-style: none; padding: 0;">
+                </ul>
+            </div>
+        </div>
 
-    function initializePage() {
-        loadCategories();
-    }
+        <div style="font-size: 0.8rem; opacity: 0.8; text-align: right; margin-top: 1rem;">
+            ⏱️ 평가 시간: <span id="evaluationTime">2.3초</span>
+        </div>
+    </div>
 
-    document.addEventListener('DOMContentLoaded', initializePage);
-</script>
+    <script>
+        async function submitWithAI(problemId, answer) {
+            showAILoading();
+            
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch(`/api/practice/submit/${problemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({ answer: answer })
+                });
+
+                const result = await response.json();
+                const evaluationTime = ((Date.now() - startTime) / 1000).toFixed(1);
+                
+                if (response.ok) {
+                    showAIFeedback(result, evaluationTime);
+                } else {
+                    showAIError();
+                }
+                
+            } catch (error) {
+                console.error('AI 평가 오류:', error);
+                showAIError();
+            }
+        }
+
+        function showAILoading() {
+            document.getElementById('aiLoadingState').style.display = 'flex';
+            document.getElementById('aiFeedbackResult').style.display = 'none';
+        }
+
+        function showAIFeedback(result, evaluationTime) {
+            document.getElementById('aiLoadingState').style.display = 'none';
+            document.getElementById('aiFeedbackResult').style.display = 'block';
+
+            document.getElementById('aiScore').textContent = result.score;
+            
+            if (result.isCreative) {
+                document.getElementById('creativeBadge').style.display = 'inline-block';
+            }
+
+            document.getElementById('aiFeedbackText').textContent = result.feedback;
+
+            if (result.strengths && result.strengths.length > 0) {
+                const strengthsList = document.getElementById('strengthsList');
+                strengthsList.innerHTML = '';
+                result.strengths.forEach(strength => {
+                    const li = document.createElement('li');
+                    li.style.cssText = 'padding: 0.5rem 0; position: relative; padding-left: 1.5rem;';
+                    li.textContent = strength;
+                    strengthsList.appendChild(li);
+                });
+                document.getElementById('strengthsSection').style.display = 'block';
+            }
+
+            if (result.improvements && result.improvements.length > 0) {
+                const improvementsList = document.getElementById('improvementsList');
+                improvementsList.innerHTML = '';
+                result.improvements.forEach(improvement => {
+                    const li = document.createElement('li');
+                    li.style.cssText = 'padding: 0.5rem 0; position: relative; padding-left: 1.5rem;';
+                    li.textContent = improvement;
+                    improvementsList.appendChild(li);
+                });
+                document.getElementById('improvementsSection').style.display = 'block';
+            }
+
+            document.getElementById('evaluationTime').textContent = `${evaluationTime}초`;
+
+            const container = document.getElementById('aiFeedbackResult');
+            if (result.score >= 90) {
+                container.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            } else if (result.score >= 70) {
+                container.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+            } else {
+                container.style.background = 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)';
+                container.style.color = '#333';
+            }
+        }
+
+        function showAIError() {
+            document.getElementById('aiLoadingState').style.display = 'none';
+            document.getElementById('aiFeedbackResult').style.display = 'none';
+        }
+    </script>
 </body>
 </html>

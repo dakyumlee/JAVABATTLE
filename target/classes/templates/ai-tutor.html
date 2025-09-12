@@ -156,7 +156,7 @@
         }
         
         .message.ai .message-avatar {
-            background: #e74c3c;
+            background: #27ae60;
             color: white;
         }
         
@@ -185,9 +185,8 @@
         }
         
         .message.ai .message-bubble {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
+            background: #27ae60;
+            color: white;
             border-bottom-left-radius: 8px;
         }
         
@@ -428,8 +427,9 @@
                     case 'user': avatarText = getUserNickname(); break;
                     case 'ai': avatarText = 'AI'; break;
                     case 'system': avatarText = 'SYS'; break;
-                }
-                avatarHtml = `<div class="message-avatar">${avatarText}</div>`;
+                } 
+                const avatarClass = type === 'ai' ? 'message-avatar ai-avatar' : 'message-avatar';
+                avatarHtml = `<div class="${avatarClass}">${avatarText}</div>`;
             }
             
             messageDiv.innerHTML = `
@@ -438,7 +438,7 @@
             `;
             
             chatMessages.appendChild(messageDiv);
-            
+             
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
@@ -450,7 +450,7 @@
             typingDiv.className = 'typing-indicator active';
             typingDiv.id = 'typingIndicator';
             typingDiv.innerHTML = `
-                <div class="message-avatar">AI</div>
+                <div class="message-avatar" style="background: #27ae60; color: white;">AI</div>
                 <div class="typing-dots">
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -458,8 +458,7 @@
                 </div>
             `;
             chatMessages.appendChild(typingDiv);
-            
-            // 스크롤을 부드럽게 맨 아래로 이동
+             
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
@@ -522,6 +521,7 @@
             }
         }
 
+        // textarea 자동 크기 조절 함수 개선
         function adjustTextareaHeight(textarea) {
             textarea.style.height = 'auto';
             const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 120);
@@ -538,11 +538,11 @@
                 sendMessage();
             }
         });
-
+ 
         document.addEventListener('DOMContentLoaded', function() {
             const messageInput = document.getElementById('messageInput');
             messageInput.focus();
-            
+             
             const chatMessages = document.getElementById('chatMessages');
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
