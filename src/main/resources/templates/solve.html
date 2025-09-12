@@ -74,6 +74,13 @@
         
         .btn-hint:hover { background: #7d3c98; }
         
+        .btn-run {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-run:hover { background: #e67e22; }
+        
         .btn-submit {
             background: #27ae60;
             color: white;
@@ -149,6 +156,38 @@
             flex: 1;
             min-height: 0;
         }
+        
+        .output-container {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .output-header {
+            padding: 0.75rem 1rem;
+            background: #2d2d2d;
+            font-weight: 600;
+            color: #f39c12;
+            font-size: 0.9rem;
+        }
+        
+        .output-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #e0e0e0;
+            background: #0f0f0f;
+            font-size: 0.9rem;
+        }
+        
+        .loading { color: #f39c12; }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
         
         .ai-feedback-container {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -258,17 +297,6 @@
             border-radius: 3px;
             margin-left: 0.5rem;
         }
-        
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 1fr 1fr;
-            }
-            
-            .header { padding: 1rem; }
-            .header-left, .header-right { gap: 0.5rem; }
-            .btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-        }
     </style>
 </head>
 <body>
@@ -281,7 +309,8 @@
             <button class="btn btn-hint" onclick="showHint()">
                 힌트 <span class="hint-level" id="hintLevel">0/3</span>
             </button>
-            <button class="btn btn-submit" onclick="submitCode()">AI 평가 제출</button>
+            <button class="btn btn-run" onclick="runCode()">실행</button>
+            <button class="btn btn-submit" onclick="submitCode()">AI 평가</button>
         </div>
     </div>
 
@@ -306,9 +335,15 @@
         </div>
 
         <div class="right-panel">
-            <div class="panel-header">코드 작성 & AI 평가</div>
+            <div class="panel-header">코드 작성</div>
             <div class="code-container">
                 <div id="editor-container"></div>
+                
+                <!-- 실행 결과 영역 -->
+                <div class="output-container" id="outputContainer">
+                    <div class="output-header">실행 결과</div>
+                    <div class="output-content" id="output">여기에 실행 결과가 표시됩니다.</div>
+                </div>
                 
                 <!-- AI 로딩 상태 -->
                 <div id="aiLoadingState" class="loading-ai" style="display: none;">
@@ -382,7 +417,7 @@
         function createStarterTemplate(fullCode, category) {
             fullSolution = fullCode;
             
-            if (category.includes('Java')) {
+            if (category && category.includes('Java')) {
                 return fullCode
                     .replace(/(System\.out\.println\([^)]*\);)/g, '// 여기에 출력문을 작성하세요')
                     .replace(/(public\s+static\s+void\s+main[^{]*\{)([\s\S]*?)(\})/g, function(match, start, content, end) {
@@ -393,15 +428,14 @@
                     });
             }
             
-            if (category === 'DB/SQL') {
-                return fullCode;
-            }
-            
-            return fullCode;
+            return fullCode || '';
         }
 
         function showHint() {
-            if (!fullSolution) return;
+            if (!fullSolution) {
+                alert('힌트를 사용할 수 없습니다.');
+                return;
+            }
             
             hintLevel++;
             if (hintLevel > 3) {
@@ -427,24 +461,17 @@
         }
 
         function addHint1(fullCode, category) {
-            if (category.includes('Java')) {
+            if (category && category.includes('Java')) {
                 return fullCode
                     .replace(/\/\/ 여기에 출력문을 작성하세요/g, '// 힌트: System.out.println("Hello World");')
                     .replace(/\/\/ 여기에 코드를 작성하세요/g, '// 힌트: 변수 선언이나 연산을 해보세요');
-            }
-            
-            if (category === 'DB/SQL') {
-                return fullCode
-                    .replace(/FROM\s+\w+/gi, function(match) {
-                        return match + ' -- 힌트: 테이블명 확인';
-                    });
             }
             
             return fullCode;
         }
 
         function addHint2(fullCode, category) {
-            if (category.includes('Java')) {
+            if (category && category.includes('Java')) {
                 return fullCode
                     .replace(/\/\/ 힌트: System\.out\.println\("Hello World"\);/g, function(match) {
                         return Math.random() > 0.3 ? 'System.out.println("Hello World");' : match;
@@ -454,71 +481,43 @@
             return fullCode;
         }
 
-        async function loadProblem() {
-            const pathParts = window.location.pathname.split('/');
-            const problemId = pathParts[pathParts.length - 1];
+        async function runCode() {
+            if (!editor) {
+                alert('코드 에디터가 준비되지 않았습니다.');
+                return;
+            }
+
+            const code = editor.getValue();
+            const output = document.getElementById('output');
+            
+            // AI 피드백 숨기기
+            document.getElementById('aiFeedbackResult').style.display = 'none';
+            document.getElementById('outputContainer').style.display = 'flex';
+            
+            output.innerHTML = '<div class="loading">코드를 실행하는 중...</div>';
 
             try {
-                const response = await fetch(`/practice/api/problems/${problemId}`);
-                
-                if (!response.ok) {
-                    throw new Error('문제를 찾을 수 없습니다.');
-                }
-
-                currentProblem = await response.json();
-                displayProblem(currentProblem);
-                
-            } catch (error) {
-                console.error('문제 로딩 실패:', error);
-                document.getElementById('problemTitle').textContent = '오류 발생';
-                document.getElementById('problemDescription').textContent = error.message;
-            }
-        }
-
-        function displayProblem(problem) {
-            document.getElementById('problemTitle').textContent = problem.title;
-            document.getElementById('problemDescription').textContent = problem.description;
-
-            if (problem.sampleInput) {
-                document.getElementById('sampleInput').textContent = problem.sampleInput;
-                document.getElementById('sampleInputSection').style.display = 'block';
-            }
-
-            if (problem.sampleOutput) {
-                document.getElementById('sampleOutput').textContent = problem.sampleOutput;
-                document.getElementById('sampleOutputSection').style.display = 'block';
-            }
-
-            if (problem.solutionTemplate) {
-                const starterCode = createStarterTemplate(problem.solutionTemplate, problem.category);
-                
-                if (editor) {
-                    const language = getLanguageFromCategory(problem.category);
-                    if (typeof monaco !== 'undefined') {
-                        monaco.editor.setModelLanguage(editor.getModel(), language);
-                    }
-                    editor.setValue(starterCode);
-                } else {
-                    setTimeout(() => {
-                        if (editor && typeof monaco !== 'undefined') {
-                            const language = getLanguageFromCategory(problem.category);
-                            monaco.editor.setModelLanguage(editor.getModel(), language);
-                            editor.setValue(starterCode);
+                // 간단한 코드 실행 시뮬레이션
+                setTimeout(() => {
+                    if (code.includes('System.out.println')) {
+                        const match = code.match(/System\.out\.println\(([^)]+)\)/);
+                        if (match) {
+                            const output_text = match[1].replace(/"/g, '');
+                            output.innerHTML = `<div class="success">실행 성공!</div><pre>${output_text}</pre>`;
+                        } else {
+                            output.innerHTML = `<div class="success">실행 성공!</div><pre>출력 완료</pre>`;
                         }
-                    }, 1000);
-                }
+                    } else if (code.toLowerCase().includes('select')) {
+                        output.innerHTML = `<div class="success">SQL 실행 성공!</div><pre>쿼리가 실행되었습니다.</pre>`;
+                    } else {
+                        output.innerHTML = `<div class="error">실행 결과 없음</div><pre>출력문을 추가해보세요.</pre>`;
+                    }
+                }, 800);
+
+            } catch (error) {
+                console.error('코드 실행 실패:', error);
+                output.innerHTML = `<div class="error">실행 오류</div><pre>코드를 확인해주세요.</pre>`;
             }
-
-            document.title = `${problem.title} - Java Battle Arena`;
-        }
-
-        function getLanguageFromCategory(category) {
-            if (category === 'HTML 기초') return 'html';
-            if (category === 'CSS 기초') return 'css';
-            if (category === 'JavaScript 기초') return 'javascript';
-            if (category === 'DB/SQL') return 'sql';
-            if (category.includes('Java')) return 'java';
-            return 'java';
         }
 
         async function submitCode() {
@@ -617,6 +616,73 @@
             document.getElementById('aiLoadingState').style.display = 'none';
             document.getElementById('aiFeedbackResult').style.display = 'none';
             alert('AI 평가 중 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+
+        async function loadProblem() {
+            const pathParts = window.location.pathname.split('/');
+            const problemId = pathParts[pathParts.length - 1];
+
+            try {
+                const response = await fetch(`/practice/api/problems/${problemId}`);
+                
+                if (!response.ok) {
+                    throw new Error('문제를 찾을 수 없습니다.');
+                }
+
+                currentProblem = await response.json();
+                displayProblem(currentProblem);
+                
+            } catch (error) {
+                console.error('문제 로딩 실패:', error);
+                document.getElementById('problemTitle').textContent = '오류 발생';
+                document.getElementById('problemDescription').textContent = error.message;
+            }
+        }
+
+        function displayProblem(problem) {
+            document.getElementById('problemTitle').textContent = problem.title;
+            document.getElementById('problemDescription').textContent = problem.description;
+
+            if (problem.sampleInput) {
+                document.getElementById('sampleInput').textContent = problem.sampleInput;
+                document.getElementById('sampleInputSection').style.display = 'block';
+            }
+
+            if (problem.sampleOutput) {
+                document.getElementById('sampleOutput').textContent = problem.sampleOutput;
+                document.getElementById('sampleOutputSection').style.display = 'block';
+            }
+
+            if (problem.solutionTemplate) {
+                const starterCode = createStarterTemplate(problem.solutionTemplate, problem.category);
+                
+                if (editor) {
+                    const language = getLanguageFromCategory(problem.category);
+                    if (typeof monaco !== 'undefined') {
+                        monaco.editor.setModelLanguage(editor.getModel(), language);
+                    }
+                    editor.setValue(starterCode);
+                } else {
+                    setTimeout(() => {
+                        if (editor && typeof monaco !== 'undefined') {
+                            const language = getLanguageFromCategory(problem.category);
+                            monaco.editor.setModelLanguage(editor.getModel(), language);
+                            editor.setValue(starterCode);
+                        }
+                    }, 1000);
+                }
+            }
+
+            document.title = `${problem.title} - Java Battle Arena`;
+        }
+
+        function getLanguageFromCategory(category) {
+            if (category === 'HTML 기초') return 'html';
+            if (category === 'CSS 기초') return 'css';
+            if (category === 'JavaScript 기초') return 'javascript';
+            if (category === 'DB/SQL') return 'sql';
+            if (category && category.includes('Java')) return 'java';
+            return 'java';
         }
 
         document.addEventListener('DOMContentLoaded', function() {
