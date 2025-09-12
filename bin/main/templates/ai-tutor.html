@@ -185,9 +185,8 @@
         }
         
         .message.ai .message-bubble {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
+            background: #27ae60;
+            color: white;
             border-bottom-left-radius: 8px;
         }
         
@@ -459,7 +458,6 @@
             `;
             chatMessages.appendChild(typingDiv);
             
-            // 스크롤을 부드럽게 맨 아래로 이동
             setTimeout(() => {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, 50);
