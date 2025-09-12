@@ -530,6 +530,8 @@
             const code = editor.getValue();
             const problemId = currentProblem.problemId;
             
+            // 실행 결과 숨기고 AI 피드백 영역 보이기
+            document.getElementById('outputContainer').style.display = 'none';
             showAILoading();
 
             try {
