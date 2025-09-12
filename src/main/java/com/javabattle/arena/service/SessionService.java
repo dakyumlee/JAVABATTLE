@@ -27,6 +27,8 @@ public class SessionService {
         
         ActiveSession session = new ActiveSession(userId, sessionId);
         session.setCurrentPage("/");
+        session.setIsActive(true);
+        session.setLastActivity(LocalDateTime.now());
         return activeSessionRepository.save(session);
     }
     
@@ -37,7 +39,9 @@ public class SessionService {
             ActiveSession session = sessionOpt.get();
             session.setLastActivity(LocalDateTime.now());
             session.setCurrentPage(page);
-            session.setCurrentCode(code);
+            if (code != null && code.length() < 1000) {
+                session.setCurrentCode(code);
+            }
             session.setIsCoding(isCoding != null ? isCoding : false);
             activeSessionRepository.save(session);
             

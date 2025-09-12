@@ -169,11 +169,25 @@ function sendActivityUpdate() {
         }
     }
     
-    console.log('세션 업데이트 비활성화 (Oracle CLOB 문제 회피)');
-    console.log('페이지:', currentPage, '코딩 상태:', isCoding);
+    console.log('활동 업데이트 전송:', {
+        userId: userId,
+        page: currentPage,
+        isCoding: isCoding,
+        codeLength: currentCode.length
+    });
     
     if (stompClient && isConnected) {
-        console.log('WebSocket 연결 상태 양호');
+        try {
+            stompClient.send('/app/student/activity', {}, JSON.stringify({
+                userId: userId,
+                page: currentPage,
+                code: currentCode.length > 500 ? currentCode.substring(0, 500) : currentCode,
+                isCoding: isCoding
+            }));
+            console.log('✅ WebSocket 활동 업데이트 전송 성공');
+        } catch (error) {
+            console.error('❌ WebSocket 활동 업데이트 전송 실패:', error);
+        }
     } else {
         console.log('WebSocket 재연결 필요');
         if (reconnectAttempts < maxReconnectAttempts) {
@@ -276,7 +290,6 @@ function showAnnouncement(data) {
     } else if (data.type === 'NEW_MATERIAL') {
         showMaterialNotification(data);
         
-        // study.html 페이지인 경우 자료 목록 새로고침
         if (window.location.pathname === '/study' && typeof window.loadSharedMaterials === 'function') {
             setTimeout(() => {
                 console.log('🔄 study.html 자료 목록 새로고침');
