@@ -495,8 +495,7 @@
                 return;
             }
 
-            const isMultipleChoice = (currentProblem.sampleInput && currentProblem.sampleInput.includes('A)')) ||
-                                   currentProblem.description.includes('A) ');
+            const isMultipleChoice = (currentProblem.sampleInput && currentProblem.sampleInput.includes('A)') && currentProblem.sampleOutput && ['A', 'B', 'C'].includes(currentProblem.sampleOutput));
 
             if (isMultipleChoice) {
                 alert('객관식 문제는 힌트를 제공하지 않습니다.');
@@ -569,7 +568,7 @@
             document.getElementById('improvementsSection').style.display = 'none';
             document.getElementById('scoreDisplay').style.display = 'none';
             document.getElementById('creativeBadge').style.display = 'none';
-            document.getElementById('evaluationTime').style.display = 'none';
+            document.getElementById('evaluationTime').parentElement.style.display = 'none';
             
             if (isCorrect) {
                 feedbackElement.style.background = '#27ae60';
@@ -643,6 +642,14 @@
         }
 
         async function submitCode() {
+            const isMultipleChoice = (currentProblem.sampleInput && currentProblem.sampleInput.includes('A)') && 
+                                    currentProblem.sampleOutput && ['A', 'B', 'C'].includes(currentProblem.sampleOutput));
+            
+            if (isMultipleChoice) {
+                submitMultipleChoice();
+                return;
+            }
+
             if (!editor || !currentProblem) {
                 alert('문제가 로드되지 않았습니다.');
                 return;
