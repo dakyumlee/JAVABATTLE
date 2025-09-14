@@ -190,7 +190,7 @@
         .error { color: #e74c3c; }
         
         .ai-feedback-container {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2d2d2d;
             border-radius: 12px;
             padding: 1.5rem;
             margin: 1rem 0;
@@ -220,7 +220,7 @@
         }
 
         .creative-badge {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            background: #e74c3c;
             padding: 0.25rem 0.75rem;
             border-radius: 15px;
             font-size: 0.8rem;
@@ -307,9 +307,57 @@
             margin-left: 0.5rem;
         }
 
-        .score-high { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
-        .score-medium { background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%); color: #333; }
-        .score-low { background: linear-gradient(135deg, #e17055 0%, #d63031 100%); }
+        .score-high { background: #27ae60; }
+        .score-medium { background: #f39c12; }
+        .score-low { background: #e74c3c; }
+
+        .multiple-choice-container {
+            padding: 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .choices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .choice-item {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .choice-item:hover {
+            border-color: #3498db;
+            background: #2a2a2a;
+        }
+
+        .choice-item.selected {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .choice-item input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #3498db;
+        }
+
+        .choice-item label {
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1.4;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -348,8 +396,8 @@
         </div>
 
         <div class="right-panel">
-            <div class="panel-header">코드 작성</div>
-            <div class="code-container">
+            <div class="panel-header" id="rightPanelHeader">코드 작성</div>
+            <div class="code-container" id="codeContainer">
                 <div id="editor-container"></div>
                 
                 <div class="output-container" id="outputContainer" style="display: none;">
@@ -447,7 +495,10 @@
                 return;
             }
 
-            if (currentProblem.type === 'MULTIPLE_CHOICE' || currentProblem.problemType === 'MULTIPLE_CHOICE') {
+            const isMultipleChoice = (currentProblem.sampleInput && currentProblem.sampleInput.includes('A)')) ||
+                                   currentProblem.description.includes('A) ');
+
+            if (isMultipleChoice) {
                 alert('객관식 문제는 힌트를 제공하지 않습니다.');
                 return;
             }
@@ -511,7 +562,14 @@
             const isCorrect = selectedIndex === correctIndex;
             
             const feedbackElement = document.getElementById('aiFeedbackResult');
-            const feedbackText = document.getElementById('mcFeedbackText');
+            const feedbackText = document.getElementById('aiFeedbackText');
+            
+            feedbackElement.style.display = 'block';
+            document.getElementById('strengthsSection').style.display = 'none';
+            document.getElementById('improvementsSection').style.display = 'none';
+            document.getElementById('scoreDisplay').style.display = 'none';
+            document.getElementById('creativeBadge').style.display = 'none';
+            document.getElementById('evaluationTime').style.display = 'none';
             
             if (isCorrect) {
                 feedbackElement.style.background = '#27ae60';
@@ -520,8 +578,6 @@
                 feedbackElement.style.background = '#e74c3c';
                 feedbackText.textContent = `틀렸습니다. 정답은 ${correctAnswerLetter}번입니다.`;
             }
-            
-            feedbackElement.style.display = 'block';
         }
 
         function addHint1(fullCode, category) {
@@ -699,6 +755,8 @@
         function showAIFeedback(result, evaluationTime) {
             document.getElementById('aiLoadingState').style.display = 'none';
             document.getElementById('aiFeedbackResult').style.display = 'block';
+            document.getElementById('scoreDisplay').style.display = 'flex';
+            document.getElementById('evaluationTime').parentElement.style.display = 'block';
 
             const score = result.score || 0;
             document.getElementById('aiScore').textContent = score;
@@ -762,6 +820,73 @@
             alert('AI 평가 중 오류가 발생했습니다. 다시 시도해주세요.');
         }
 
+        function showMultipleChoiceInterface(problem) {
+            let choices = [];
+            
+            if (problem.sampleInput) {
+                const choiceText = problem.sampleInput;
+                if (choiceText.includes('A)')) {
+                    const parts = choiceText.split(/\s*[ABC]\)\s*/);
+                    const letters = ['A', 'B', 'C'];
+                    for (let i = 1; i < parts.length && i <= 3; i++) {
+                        if (parts[i].trim()) {
+                            choices.push(`${letters[i-1]}) ${parts[i].trim()}`);
+                        }
+                    }
+                }
+            }
+            
+            if (choices.length === 0) {
+                choices = ['A) 선택지 1', 'B) 선택지 2', 'C) 선택지 3'];
+            }
+            
+            document.getElementById('rightPanelHeader').textContent = '선택지';
+            document.getElementById('codeContainer').innerHTML = `
+                <div class="multiple-choice-container">
+                    <div class="choices-list" id="choicesList">
+                        ${choices.map((choice, index) => `
+                            <div class="choice-item" onclick="selectChoice(${index})">
+                                <input type="radio" name="answer" value="${index}" id="choice${index}">
+                                <label for="choice${index}">${choice.trim()}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn btn-submit" onclick="submitMultipleChoice()" style="margin-top: 1rem;">정답 제출</button>
+                </div>
+                
+                <div id="aiFeedbackResult" class="ai-feedback-container" style="display: none;">
+                    <div class="ai-feedback-header">
+                        <span>정답 확인</span>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-content" id="aiFeedbackText"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showCodeEditorInterface(problem) {
+            document.getElementById('rightPanelHeader').textContent = '코드 작성';
+            
+            if (problem.solutionTemplate) {
+                const starterCode = createStarterTemplate(problem.solutionTemplate, problem.category);
+                
+                if (editor) {
+                    const language = getLanguageFromCategory(problem.category);
+                    monaco.editor.setModelLanguage(editor.getModel(), language);
+                    editor.setValue(starterCode);
+                } else {
+                    setTimeout(() => {
+                        if (editor) {
+                            const language = getLanguageFromCategory(problem.category);
+                            monaco.editor.setModelLanguage(editor.getModel(), language);
+                            editor.setValue(starterCode);
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
         async function loadProblem() {
             const pathParts = window.location.pathname.split('/');
             const problemId = pathParts[pathParts.length - 1];
@@ -784,6 +909,8 @@
         }
 
         function displayProblem(problem) {
+            console.log('현재 문제:', problem);
+            
             document.getElementById('problemTitle').textContent = problem.title;
             document.getElementById('problemDescription').textContent = problem.description;
 
@@ -797,22 +924,18 @@
                 document.getElementById('sampleOutputSection').style.display = 'block';
             }
 
-            if (problem.solutionTemplate) {
-                const starterCode = createStarterTemplate(problem.solutionTemplate, problem.category);
-                
-                if (editor) {
-                    const language = getLanguageFromCategory(problem.category);
-                    monaco.editor.setModelLanguage(editor.getModel(), language);
-                    editor.setValue(starterCode);
-                } else {
-                    setTimeout(() => {
-                        if (editor) {
-                            const language = getLanguageFromCategory(problem.category);
-                            monaco.editor.setModelLanguage(editor.getModel(), language);
-                            editor.setValue(starterCode);
-                        }
-                    }, 1000);
-                }
+            const isMultipleChoice = (problem.sampleInput && problem.sampleInput.includes('A)')) ||
+                                   problem.description.includes('A) ') ||
+                                   [2, 3, 4, 5, 6].includes(problem.problemId);
+
+            console.log('객관식 문제인가?', isMultipleChoice);
+
+            if (isMultipleChoice) {
+                console.log('객관식 인터페이스 표시');
+                showMultipleChoiceInterface(problem);
+            } else {
+                console.log('코딩 인터페이스 표시');
+                showCodeEditorInterface(problem);
             }
 
             document.title = `${problem.title} - Java Battle Arena`;
