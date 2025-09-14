@@ -919,15 +919,15 @@
                 document.getElementById('sampleInputSection').style.display = 'block';
             }
 
-            if (problem.sampleOutput) {
-                document.getElementById('sampleOutput').textContent = problem.sampleOutput;
-                document.getElementById('sampleOutputSection').style.display = 'block';
-            }
-
             const isMultipleChoice = problem.problemType === 'MULTIPLE_CHOICE' ||
                                    (problem.sampleInput && problem.sampleInput.includes('A)') && problem.sampleOutput && ['A', 'B', 'C'].includes(problem.sampleOutput));
 
             console.log('객관식 문제인가?', isMultipleChoice);
+
+            if (problem.sampleOutput && !isMultipleChoice) {
+                document.getElementById('sampleOutput').textContent = problem.sampleOutput;
+                document.getElementById('sampleOutputSection').style.display = 'block';
+            }
 
             if (isMultipleChoice) {
                 console.log('객관식 인터페이스 표시');
