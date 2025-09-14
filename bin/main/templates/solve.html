@@ -924,9 +924,8 @@
                 document.getElementById('sampleOutputSection').style.display = 'block';
             }
 
-            const isMultipleChoice = (problem.sampleInput && problem.sampleInput.includes('A)')) ||
-                                   problem.description.includes('A) ') ||
-                                   [2, 3, 4, 5, 6].includes(problem.problemId);
+            const isMultipleChoice = problem.problemType === 'MULTIPLE_CHOICE' ||
+                                   (problem.sampleInput && problem.sampleInput.includes('A)') && problem.sampleOutput && ['A', 'B', 'C'].includes(problem.sampleOutput));
 
             console.log('객관식 문제인가?', isMultipleChoice);
 
