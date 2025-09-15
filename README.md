@@ -44,7 +44,7 @@ src/main/java/com/javabattle/arena
 src/main/resources
 ├─ templates/     # index, practice, solve, study, teacher, admin, ai-tutor, arena
 ├─ static/        # js, css, images
-└─ application.yml   # (환경변수 기반 설정 권장)
+└─ application.yml   # (환경변수 기반 설정 권장) 
 
 ---
 
