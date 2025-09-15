@@ -32,10 +32,10 @@
 ---
 
 ## 🗂 프로젝트 구조
-
+```text
 src/main/java/com/javabattle/arena
 ├─ config/        # Security, CORS, WebSocket, JWT
-├─ model/         # User, Problem, Submission, Note, Quiz, Stats …
+├─ model/         # User, Problem, Submission, Note, Quiz, Stats ...
 ├─ repository/    # Spring Data JPA repositories
 ├─ service/       # User/Problem/Session/Jwt/AI Tutor services
 ├─ web/           # Controllers (Auth/Practice/Study/Teacher/Admin/WS)
