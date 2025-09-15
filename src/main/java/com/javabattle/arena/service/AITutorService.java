@@ -1,15 +1,15 @@
 package com.javabattle.arena.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
-import java.util.*;
+import org.springframework.beans.factory.annotation.Value;import org.springframework.http.*;
+import org.springframework.beans.factory.annotation.Value;import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;import java.util.*;
 
 @Service
 public class AITutorService {
     
     private static final String CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
-    private static final String API_KEY = "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";
+    @Value("${claude.api.key}") private String apiKey;
     
     private RestTemplate restTemplate = new RestTemplate();
     
@@ -37,7 +37,7 @@ public class AITutorService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("x-api-key", API_KEY);
+            headers.set("x-api-key", apiKey);
             headers.set("anthropic-version", "2023-06-01");
             
             Map<String, Object> requestBody = new HashMap<>();

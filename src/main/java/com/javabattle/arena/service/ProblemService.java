@@ -3,7 +3,7 @@ package com.javabattle.arena.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
-import java.io.IOException;
+import org.springframework.beans.factory.annotation.Value;import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,7 +14,7 @@ import java.util.*;
 public class ProblemService {
     
     private final String CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
-    private final String API_KEY = "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";
+    @Value("${claude.api.key}") private String apiKey;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     
@@ -58,7 +58,7 @@ public class ProblemService {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(CLAUDE_API_URL))
                 .header("Content-Type", "application/json")
-                .header("x-api-key", API_KEY)
+                .header("x-api-key", apiKey)
                 .header("anthropic-version", "2023-06-01")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();

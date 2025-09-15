@@ -1,0 +1,21 @@
+# API Keys and Secrets
+*.key
+*.env
+application-*.yml
+
+# Build files
+target/
+build/
+bin/
+*.jar
+*.war
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+logs/
