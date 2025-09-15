@@ -561,14 +561,26 @@
             const isCorrect = selectedIndex === correctIndex;
             
             const feedbackElement = document.getElementById('aiFeedbackResult');
-            const feedbackText = document.getElementById('aiFeedbackText');
+            let feedbackText = document.getElementById('aiFeedbackText');
+            
+            if (!feedbackElement || !feedbackText) {
+                console.error('피드백 요소를 찾을 수 없습니다');
+                return;
+            }
             
             feedbackElement.style.display = 'block';
-            document.getElementById('strengthsSection').style.display = 'none';
-            document.getElementById('improvementsSection').style.display = 'none';
-            document.getElementById('scoreDisplay').style.display = 'none';
-            document.getElementById('creativeBadge').style.display = 'none';
-            document.getElementById('evaluationTime').parentElement.style.display = 'none';
+            
+            const strengthsSection = document.getElementById('strengthsSection');
+            const improvementsSection = document.getElementById('improvementsSection');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const creativeBadge = document.getElementById('creativeBadge');
+            const evaluationTime = document.getElementById('evaluationTime');
+            
+            if (strengthsSection) strengthsSection.style.display = 'none';
+            if (improvementsSection) improvementsSection.style.display = 'none';
+            if (scoreDisplay) scoreDisplay.style.display = 'none';
+            if (creativeBadge) creativeBadge.style.display = 'none';
+            if (evaluationTime && evaluationTime.parentElement) evaluationTime.parentElement.style.display = 'none';
             
             if (isCorrect) {
                 feedbackElement.style.background = '#27ae60';
@@ -866,8 +878,13 @@
                         <span>정답 확인</span>
                     </div>
                     <div class="feedback-section">
-                        <div class="feedback-content" id="aiFeedbackText"></div>
+                        <div class="feedback-content" id="aiFeedbackText">결과를 확인하는 중...</div>
                     </div>
+                    <div id="strengthsSection" style="display: none;"></div>
+                    <div id="improvementsSection" style="display: none;"></div>
+                    <div id="scoreDisplay" style="display: none;"></div>
+                    <div id="creativeBadge" style="display: none;"></div>
+                    <div style="display: none;"><span id="evaluationTime"></span></div>
                 </div>
             `;
         }
